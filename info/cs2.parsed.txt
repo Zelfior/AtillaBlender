@@ -1,0 +1,180 @@
+struct bounding_box
+	4 bytes (float) - min_x
+	4 bytes (float) - min_y
+	4 bytes (float) - min_z
+	4 bytes (float) - max_x
+	4 bytes (float) - max_y
+	4 bytes (float) - max_z
+
+struct unicode_string
+	2 bytes (uint16) - length
+	length bytes - data
+
+struct matrix_4x4
+	4 bytes (float) r0_c0
+	4 bytes (float) r1_c0
+	4 bytes (float) r2_c0
+	4 bytes (float) r3_c0
+	4 bytes (float) r0_c1
+	4 bytes (float) r1_c1
+	4 bytes (float) r2_c1
+	4 bytes (float) r3_c1
+	4 bytes (float) r0_c2
+	4 bytes (float) r1_c2
+	4 bytes (float) r2_c2
+	4 bytes (float) r3_c2
+	4 bytes (float) r0_c3
+	4 bytes (float) r1_c3
+	4 bytes (float) r2_c3
+	4 bytes (float) r3_c3
+
+struct vec2
+	float - pos_x
+	float - pos_y
+
+struct vert
+	float - pos_x
+	float - pos_y
+	float - pos_z
+
+struct edge
+	uint32 - vertex_index_0
+	uint32 - vertex_index_1
+	uint32 - edge_index
+	uint32 - unknown
+
+struct edge_data
+	edge - edge_0
+	edge - edge_1
+	edge - edge_2
+	edge - edge_3
+
+struct face
+	uint32 - id
+	byte - padding
+	uint32 - vert_index_0
+	uint32 - vert_index_1
+	uint32 - vert_index_2
+	edge_data - edge_data
+
+struct collision3d
+	unicode_string - collision3d_name
+	uint32 - unknown
+	uint32 - unknown
+	uint32 - num_verts
+	array(num_verts * vert) - data_vertices
+	uint32 - num_faces
+	array(num_faces * face) - data_faces
+
+struct line
+	unicode_string - line_name
+	uint32 - num_verts
+	array(num_verts * vert) - data_verts
+	uint32 - line_type
+
+struct nogo_line
+	vec2 - verts
+	uint32 - num_connected_lines
+
+struct nogo_zone
+	uint32 - num_lines
+	array(num_lines * nogo_line) - data_nogo_line
+
+struct platform_face
+	vert - normal
+	uint32 - num_verts
+	array(num_verts * vert) - data_verts
+	byte - flag1
+	byte - flag2
+	byte - flag3
+
+struct node
+	unicode_string - name
+	matrix_4x4 - transform
+
+struct file_ref
+	unicode_string - key
+	unicode_string - name
+	matrix_4x4 - transform
+	uint16 - unknown
+
+struct soft_collision
+	unicode_string - name
+	matrix_4x4 - transform
+	uint16 - unknown, maybe some id
+	float - radius
+	float - height
+
+struct ef_line
+	unicode_string - name
+	uint32 - enum_efline_action
+	vec3 - line_start
+	vec3 - line_end
+	vec3 - line_dir
+	uint32 - platform_id
+
+struct action_vfx_attachment
+	uint32 - num_face_indices
+	array(num_face_indices * 2) - data_face_indices
+
+struct destruct
+	unicode_string - destruct_name
+	uint32 - destruct_index
+	collision3d - collision3d
+	uint32 - num_windows
+	array(num_windows * collision3d) - data_windows
+	uint32 - num_doors
+	array(num_doors * collision3d) - data_doors
+	uint32 - num_gates
+	array(num_gates * collision3d) - data_gates
+	uint32 - num_lines
+	array(num_lines * line) - data_lines
+	uint32 - num_pipes
+	array(num_pipes * line) - data_pipes
+	uint32 - num_nogo_zones
+	array(num_nogo_zones * nogo_zone) - data_nogo_zones
+	uint32 - num_platform_faces
+	array(num_platform_faces * platform_face) - data_platform
+	uint32 - unknown, parent id?
+	bounding_box - destruct_bounding_box
+	uint32 - num_cannons
+	array(num_cannons * node) - data_cannons
+	uint32 - num_arrow_emitters
+	array(num_arrow_emitters * node) - data_arrow_emitters
+	uint32 - num_docking_points
+	array(num_docking_points * node) - data_docking_points
+	uint32 - num_soft_collisions
+	array(num_soft_collisions * soft_collision) - data_soft_collisions
+	uint32 - unknown_array_size
+	uint32 - num_file_refs
+	array(num_file_refs * file_ref) - data_file_refs
+	uint32 - num_eflines
+	array(num_eflines * ef_line) - data_eflines
+	uint32 - unknown_array_size
+	uint32 - num_action_vfx
+	array(num_action_vfx * node) - data_action_vfx
+	uint32 - num_action_vfx2
+	array(num_action_vfx2 * node) - data_action_vfx2
+	uint32 - num_action_vfx_attachment
+	array(num_action_vfx_attachment * action_vfx_attachment) - data_action_vfx_attachment
+	uint32 - num_action_vfx_attachment2
+	array(num_action_vfx_attachment2 * action_vfx_attachment) - data_action_vfx_attachment2
+
+struct piece
+	unicode_string - piece_name
+	node - placement
+	uint32 - unknown. parent id?
+	uint32 - num_destruct
+	array(num_destruct * destruct) - destructs
+
+
+# ---------------------------------------------
+
+uint32 - version
+bounding_box - building bounding box
+node - flag
+uint32 - unknown_array_size
+array(unknown_array_size * unknown_struct) - data_unknown
+uint32 - pieces_count
+array(pieces_count * piece)
+

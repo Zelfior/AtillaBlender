@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<regions>
+    <zone_regions>
+        <region name="region_zone01">
+            <point x="20.2" y="0.0" z="2.5"/>
+            <point x="-0.2" y="0.0" z="2.5"/>
+            <point x="-0.2" y="0.0" z="-2.0"/>
+            <point x="2.234" y="0.0" z="-2.0"/>
+            <point x="3.712" y="0.0" z="-6.469"/>
+            <point x="7.7" y="0.0" z="-9.16"/>
+            <point x="12.293" y="0.0" z="-9.193"/>
+            <point x="16.06" y="0.0" z="-6.405"/>
+            <point x="17.517" y="0.0" z="-2.0"/>
+            <point x="20.2" y="0.0" z="-2.0"/>
+        </region>
+    </zone_regions>
+    <go_regions/>
+    <no_go_regions/>
+</regions>
