@@ -25,7 +25,7 @@ class UnicodeString():
     def new_unicodestring():
         return UnicodeString(0, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
-        self.length = io_int(io, self.length, operation)
+        self.length = io_short(io, self.length, operation)
 
         if operation == IOOperation.READ:
             self.value = io_str(io, "o"*self.length, operation)
@@ -219,10 +219,10 @@ class FaceEdge():
     def new_face_edge():
         return FaceEdge(None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
-        self.minX = io_float(io, self.minX, operation)
-        self.minY = io_float(io, self.minY, operation)
-        self.minZ = io_float(io, self.minZ, operation)
-        self.maxX = io_float(io, self.maxX, operation)
+        self.vertexIndex0 = io_int(io, self.vertexIndex0, operation)
+        self.vertexIndex1 = io_int(io, self.vertexIndex1, operation)
+        self.edgeIndex = io_int(io, self.edgeIndex, operation)
+        self.unknown = io_int(io, self.unknown, operation)
 
 class FaceEdgeData():
     edge0:FaceEdge
@@ -241,6 +241,11 @@ class FaceEdgeData():
     def new_face_edge_data():
         return FaceEdgeData(None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        if operation == IOOperation.READ:
+            self.edge0 = FaceEdge.new_face_edge()
+            self.edge1 = FaceEdge.new_face_edge()
+            self.edge2 = FaceEdge.new_face_edge()
+            self.edge3 = FaceEdge.new_face_edge()
         self.edge0.from_to_file(io, operation)
         self.edge1.from_to_file(io, operation)
         self.edge2.from_to_file(io, operation)
@@ -267,6 +272,9 @@ class Face():
     def new_face():
         return Face(None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        if operation == IOOperation.READ:
+            self.edgeData = FaceEdgeData.new_face_edge_data()
+
         self.faceIndex = io_int(io, self.faceIndex, operation)
 
         if operation == IOOperation.READ:
@@ -310,16 +318,17 @@ class Collision3D():
     def new_collision_3d():
         return Collision3D(None, None, None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        if operation == IOOperation.READ:
+            self.collisionName = UnicodeString.new_unicodestring()
+            self.dataVerts = []
+            self.dataFaces = []
+
         self.collisionName.from_to_file(io, operation)
 
         self.nodeIndex = io_int(io, self.nodeIndex, operation)
         self.unknown2 = io_int(io, self.unknown2, operation)
 
         self.numVerts = io_int(io, self.numVerts, operation)
-
-        if operation == IOOperation.READ:
-            self.dataVerts = []
-            self.dataFaces = []
         
         for i in range(self.numVerts):
             if operation == IOOperation.READ:
@@ -355,6 +364,8 @@ class LineNode():
     def new_line_node():
         return LineNode(None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        if operation == IOOperation.READ:
+            self.lineName = UnicodeString.new_unicodestring()
         self.lineName.from_to_file(io, operation)
         self.numVerts = io_int(io, self.numVerts, operation)
 
@@ -393,11 +404,11 @@ class NogoZone():
                 self.dataLines.append(Vec2d(None, None))
                 self.dataLines[i].from_to_file(io, operation)
                 numLinesConnected = io_int(io, 0, operation)
-                somestuffhere
+                # TODO : somestuffhere
             else:
                 self.dataLines[i].from_to_file(io, operation)
                 numLinesConnected = io_int(io, 0, operation)
-                somestuffhere
+                # TODO : somestuffhere
 
 class Polygon():
     normal:Vec3d
@@ -678,7 +689,7 @@ class DestructLevel():
                              None, None, None, None, None,
                              None, None, None, None, None,
                              None, None, None, None, None,
-                             None, None, None, None, None)
+                             None, None, None, None, None, None)
     
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         if operation == IOOperation.READ:
@@ -742,7 +753,7 @@ class DestructLevel():
         """
             Wasted data?
         """
-        self.numNogo = io_int(io, self.numNogo, operation)
+        self.numNogo = io_int(io, 0, operation)
         self.nogo:List[NogoZone] = []
         for _ in range(self.numNogo):
             if operation == IOOperation.READ:
@@ -933,7 +944,8 @@ class Cs2File:
                 raise ValueError("Unknown data detected.")
             
             self.piece_count = io_int(f, 0, operation)
-
+            print(f"Reading {self.piece_count} pieces.")
+            
             if operation == IOOperation.READ:
                 self.building_pieces = []
                 for _ in range(self.piece_count):
@@ -950,7 +962,7 @@ if __name__ == "__main__":
     file_list = glob.glob("C:\\Users\\tm787802\\Documents\\Workspace\\AtillaBlender\\files\\cs2_parsed\\*\\*_tech.cs2.parsed")
 
     cs2 = Cs2File.new_cs2file()
-    cs2.read_write_file(file_list[4], 
+    cs2.read_write_file(file_list[0], 
                             IOOperation.READ)
     
     # for file in file_list:
