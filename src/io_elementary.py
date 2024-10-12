@@ -2,13 +2,20 @@ from enum import Enum
 import struct
 from typing import IO, Any
 
+# https://docs.micropython.org/en/latest/library/struct.html
+
+debug = True
+
 class IOOperation(Enum):
     READ=0
     WRITE=0
 
 def io_short(io:IO, short_value:int, operation:IOOperation):
     if operation == IOOperation.READ:
-        return struct.unpack('i', io.read(2))
+        val = int(struct.unpack('h', io.read(2))[0])
+        if debug:
+            print(f"Read short {val}")
+        return val
     else:
         if short_value is None:
             raise ValueError("Requested to write a None integer.")
@@ -17,7 +24,10 @@ def io_short(io:IO, short_value:int, operation:IOOperation):
     
 def io_int(io:IO, int_value:int, operation:IOOperation):
     if operation == IOOperation.READ:
-        return struct.unpack('i', io.read(4))
+        val = struct.unpack('i', io.read(4))[0]
+        if debug:
+            print(f"Read int {val}")
+        return val
     else:
         if int_value is None:
             raise ValueError("Requested to write a None integer.")
@@ -26,7 +36,10 @@ def io_int(io:IO, int_value:int, operation:IOOperation):
 
 def io_float(io:IO, float_value:int, operation:IOOperation):
     if operation == IOOperation.READ:
-        return struct.unpack('f', io.read(4))
+        val = struct.unpack('f', io.read(4))[0]
+        if debug:
+            print(f"Read short {val}")
+        return val
     else:
         if float_value is None:
             raise ValueError("Requested to write a None float.")
@@ -35,9 +48,13 @@ def io_float(io:IO, float_value:int, operation:IOOperation):
 
 def io_str(io:IO, string_value:str, operation:IOOperation):
     if operation == IOOperation.READ:
-        length = len(string_value)*4
-        # return struct.unpack('s', io.read(length))
-        return struct.unpack("B", io.read(length))[0].decode()
+        length = len(string_value)
+        if debug:
+            print(f"Reading string of length {length}")
+        val = io.read(length).decode('utf-8')
+        if debug:
+            print(f"Reading string {val}")
+        return val
     else:
         if string_value is None:
             raise ValueError("Requested to write a None string.")
@@ -46,10 +63,15 @@ def io_str(io:IO, string_value:str, operation:IOOperation):
     
 def io_bytes(io:IO, bytes_value:Any, bytes_count:int, operation:IOOperation):
     if operation == IOOperation.READ:
-        return io.read(bytes_count)
+        if debug:
+            print(f"Reading bytes of length {bytes_count}")
+        val = io.read(bytes_count)
+        if debug:
+            print(f"Reading bytes {val}")
+        return val, bytes_count
     else:
         if bytes_value is None:
             raise ValueError("Requested to write a None integer.")
         io.write(bytes_value)
-        return bytes_value
+        return bytes_value, bytes_count
     
