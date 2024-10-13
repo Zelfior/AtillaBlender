@@ -66,7 +66,7 @@ def test_arena_tech():
 def test_athens_acropolis_tech():
     file_path = package_path/"files/cs2_parsed/athens_acropolis/athens_acropolis_tech.cs2.parsed"
 
-    run_test(file_path.absolute(), has_vfx=True)
+    run_test(file_path.absolute())
 
 def test_attila_cliff_01_tech():
     file_path = package_path/"files/cs2_parsed/attila_cliff_01/attila_cliff_01_tech.cs2.parsed"
@@ -129,4 +129,4 @@ def test_western_villa_tabernae_tech():
     run_test(file_path.absolute(), has_vfx=True)
 
 if __name__ == "__main__":
-    test_barbarian_fort_curved_bastion_tech()
+    test_athens_acropolis_tech()

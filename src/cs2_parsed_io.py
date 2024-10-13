@@ -480,7 +480,6 @@ class Polygon():
         self.groundPlatformByte.from_to_file(io, operation)
 
         self.isPlatformGround = self.groundPlatformByte.value != b"\x00"
-        print("Platform", self.groundPlatformByte.value, self.isPlatformGround, "at", hex(io.tell()))
         
         self.somebyte_2.from_to_file(io, operation)
 
@@ -518,21 +517,26 @@ class Platform():
 class SoftCollision():
     nodeName:UnicodeString
     nodeTransform:TransformMatrix
+    some_short:int
     cylinderRadius:float
     cylinderHeight:float
     
     def __init__(self, 
                     nodeName:UnicodeString,
                     nodeTransform:TransformMatrix,
+                    some_short:int,
                     cylinderRadius:float,
                     cylinderHeight:float):
         self.nodeName = nodeName
         self.nodeTransform = nodeTransform
+        self.some_short = some_short
         self.cylinderRadius = cylinderRadius
         self.cylinderHeight = cylinderHeight
     def new_soft_collision():
-        return SoftCollision(None, None, None, None)
+        return SoftCollision(None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print(f"Read soft collision at {hex(io.tell())}")
+
         if operation == IOOperation.READ:
             self.nodeName = UnicodeString.new_unicodestring()
             self.nodeTransform = TransformMatrix.new_transform_matrix()
@@ -541,7 +545,7 @@ class SoftCollision():
         
         self.nodeTransform.from_to_file(io, operation)
 
-        self.some_short = io_short(io, operation)
+        self.some_short = io_short(io, self.some_short, operation)
 
         self.cylinderRadius = io_float(io, self.cylinderRadius, operation)
         self.cylinderHeight = io_float(io, self.cylinderHeight, operation)    
@@ -872,7 +876,7 @@ class DestructLevel():
         print(f"reading {self.numSoftCollisions} SoftCollisions")
         for i in range(self.numSoftCollisions):
             if operation == IOOperation.READ:
-                self.dataSoftCollisions.append(TechNode.new_tech_node())
+                self.dataSoftCollisions.append(SoftCollision.new_soft_collision())
             
             self.dataSoftCollisions[i].from_to_file(io, operation)
         

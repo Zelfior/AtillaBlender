@@ -79,7 +79,6 @@ def io_str(io:IO, string_value:str, operation:IOOperation):
         return string_value
     
 def io_bytes(io:IO, bytes_value:Any, bytes_count:int, operation:IOOperation):
-    debug = True
     if operation == IOOperation.READ:
         if debug:
             print(f"Reading bytes of length {bytes_count}")
