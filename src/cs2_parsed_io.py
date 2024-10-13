@@ -870,9 +870,18 @@ class DestructLevel():
         if someArray > 0:
             raise ValueError("Unknown data detected.")
         
-        if version == 11:
-            return 0.
+        
+        if operation == IOOperation.READ:
+            current_position = io.tell()
+            
+            has_vfx = io_int(io, 0, operation) != 0
+
+            io.seek(current_position)
+        
         else:
+            has_vfx = True
+
+        if has_vfx:
             print("Starting to write VFX")
             self.numActionVFX = io_int(io, self.numActionVFX, operation)
             for i in range(self.numActionVFX):
@@ -947,6 +956,7 @@ class BuildingPiece():
                 self.destructs[i].from_to_file(io, operation)
                 
         array_size = io_int(io, 0, operation)
+
         if array_size > 0:
             raise ValueError("Unknown array detected.")
 

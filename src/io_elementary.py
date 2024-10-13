@@ -66,7 +66,7 @@ def io_str(io:IO, string_value:str, operation:IOOperation):
             if debug:
                 print(f"byt found {byt}")
             if not byt in [b"\xFD",b"\xfb", b"\xFC"]:
-                string_value += byt.decode()
+                string_value += byt.decode(encoding='windows-1252')
         if debug:
             print(f"Reading string \"{string_value}\"")
         return string_value
