@@ -450,8 +450,6 @@ class Polygon():
             self.normal = Vec3d(None, None, None)
 
         self.normal.from_to_file(io, operation)
-
-        print(self.normal.x, self.normal.y, self.normal.z)
         
         self.numVerts = io_int(io, self.numVerts, operation)
         
@@ -597,6 +595,11 @@ class EFLine():
         return EFLine(None, None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         print("from_to_file efline")
+        if operation == IOOperation.READ:
+            self.lineName = UnicodeString.new_unicodestring()
+            self.lineStart = Vec3d.new_vec3d()
+            self.lineEnd = Vec3d.new_vec3d()
+            self.lineDir = Vec3d.new_vec3d()
         self.lineName.from_to_file(io, operation)
         print(f"Reading {self.lineName}")
         
@@ -877,7 +880,7 @@ class DestructLevel():
         print(f"reading {self.numEFLines} EFLines")
         for i in range(self.numEFLines):
             if operation == IOOperation.READ:
-                self.dataEFLines.append(FileRef.new_file_ref())
+                self.dataEFLines.append(EFLine.new_ef_line())
             
             self.dataEFLines[i].from_to_file(io, operation)
         
@@ -897,8 +900,9 @@ class DestructLevel():
             has_vfx = True
 
         if has_vfx:
-            print("Starting to write VFX")
+            print("Starting to read/write VFX")
             self.numActionVFX = io_int(io, self.numActionVFX, operation)
+            print(f"Found {self.numActionVFX} ActionVFX")
             for i in range(self.numActionVFX):
                 if operation == IOOperation.READ:
                     self.ActionVFX.append(TechNode.new_tech_node())
