@@ -1,7 +1,10 @@
 
-import os
+import os, sys
 from pathlib import Path
 from typing import IO, Any, List
+
+package_path = Path(__file__).absolute().parent.parent
+sys.path.append((package_path/"src").name)
 
 from io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
 
