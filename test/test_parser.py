@@ -12,6 +12,12 @@ from io_elementary import IOOperation
 
 
 def run_test(file_path):
+
+    if not os.path.exists(file_path):
+        print(file_path)
+        print(os.getcwd())
+        print(os.listdir(os.getcwd()))
+        
     input_path = Path(file_path)
 
     file_name = "garbage/"+input_path.name
