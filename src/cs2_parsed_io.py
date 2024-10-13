@@ -450,9 +450,12 @@ class Polygon():
             self.normal = Vec3d(None, None, None)
 
         self.normal.from_to_file(io, operation)
+
+        print(self.normal.x, self.normal.y, self.normal.z)
         
         self.numVerts = io_int(io, self.numVerts, operation)
         
+        print(f"Reading {self.numVerts} verts  at {hex(io.tell())}/{hex(io.tell())}")
         for i in range(self.numVerts):
             if operation == IOOperation.READ:
                 self.dataVerts.append(Vec3d(None, None, None))
@@ -462,18 +465,19 @@ class Polygon():
         
         if operation == IOOperation.READ:
             self.somebyte_1 = SomeBytes(1, None)
+            self.somebyte_2 = SomeBytes(1, None)
+            self.groundPlatformByte = SomeBytes(1, None)
         else:
-            self.somebyte_1 = SomeBytes(1, 0)
+            self.somebyte_1 = SomeBytes(1, b"\x00")
+            self.somebyte_2 = SomeBytes(1, b"\x00")
+            self.groundPlatformByte = SomeBytes(1, b"\x00")
 
         self.somebyte_1.from_to_file(io, operation)
 
-        self.isPlatformGround = io_int(io, self.isPlatformGround, operation) != 0
-        
-        if operation == IOOperation.READ:
-            self.somebyte_2 = SomeBytes(1, None)
-        else:
-            self.somebyte_2 = SomeBytes(1, 0)
+        self.groundPlatformByte.from_to_file(io, operation)
 
+        self.isPlatformGround = self.groundPlatformByte.value != b"\x00"
+        
         self.somebyte_2.from_to_file(io, operation)
 
 class Platform():
@@ -496,6 +500,7 @@ class Platform():
         if operation == IOOperation.READ:
             self.dataPolygons = []
             
+        print(f"Reading {self.numPolygons} polygons  at {hex(io.tell())}/{hex(io.tell())}")
         for i in range(self.numPolygons):
             if operation == IOOperation.READ:
                 self.dataPolygons.append(Polygon(None, None,None, None))
@@ -503,6 +508,7 @@ class Platform():
             else:
                 self.dataPolygons[i].from_to_file(io, operation)
                 
+        print(f"Reading int at {hex(io.tell())}")
         self.some_int = io_int(io, self.some_int, operation)
 
 class SoftCollision():
@@ -540,16 +546,19 @@ class FileRef():
     fileKey:UnicodeString
     fileName:UnicodeString
     fileTransform:TransformMatrix
+    some_short:int
     
     def __init__(self, 
                     fileKey:UnicodeString,
                     fileName:UnicodeString,
-                    fileTransform:TransformMatrix):
+                    fileTransform:TransformMatrix,
+                    some_short:int):
         self.fileKey = fileKey
         self.fileName = fileName
         self.fileTransform = fileTransform
+        self.some_short = some_short
     def new_file_ref():
-        return FileRef(None, None, None)
+        return FileRef(None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         print("from_to_file fileref")
         if operation == IOOperation.READ:
@@ -561,7 +570,7 @@ class FileRef():
         self.fileKey.from_to_file(io, operation)
         
         self.fileTransform.from_to_file(io, operation)
-        self.some_short = io_short(io, operation)
+        self.some_short = io_short(io, self.some_short, operation)
 
 class EFLine():
     lineName:UnicodeString
@@ -589,6 +598,7 @@ class EFLine():
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         print("from_to_file efline")
         self.lineName.from_to_file(io, operation)
+        print(f"Reading {self.lineName}")
         
         self.lineAction = io_int(io, self.lineAction, operation)
         
@@ -760,6 +770,7 @@ class DestructLevel():
         self.collision3dMesh.from_to_file(io, operation)
 
         self.numWindows = io_int(io, self.numWindows, operation)
+        print(f"reading {self.numWindows} windows at {hex(io.tell())}")
         for _ in range(self.numWindows):
             if operation == IOOperation.READ:
                 self.collision3dWindows.append(Collision3D.new_collision_3d())
@@ -767,6 +778,7 @@ class DestructLevel():
             self.collision3dWindows[-1].from_to_file(io, operation)
 
         self.numDoors = io_int(io, self.numDoors, operation)
+        print(f"reading {self.numDoors} doors at {hex(io.tell())}")
         for _ in range(self.numDoors):
             if operation == IOOperation.READ:
                 self.collision3dDoors.append(Collision3D.new_collision_3d())
@@ -774,6 +786,7 @@ class DestructLevel():
             self.collision3dDoors[-1].from_to_file(io, operation)
 
         self.numSpecial = io_int(io, self.numSpecial, operation)
+        print(f"reading {self.numSpecial} special at {hex(io.tell())}")
         for _ in range(self.numSpecial):
             if operation == IOOperation.READ:
                 self.collision3dSpecial.append(Collision3D.new_collision_3d())
@@ -783,30 +796,26 @@ class DestructLevel():
             self.collision3dSpecial[-1].from_to_file(io, operation)
 
         self.numLines = io_int(io, self.numLines, operation)
+        print(f"reading {self.numLines} lines at {hex(io.tell())}")
         for _ in range(self.numLines):
-            print("dataLines")
             if operation == IOOperation.READ:
                 self.dataLines.append(LineNode.new_line_node())
             
             self.dataLines[-1].from_to_file(io, operation)
 
         self.numPipes = io_int(io, self.numPipes, operation)
+        print(f"reading {self.numPipes} pipes at {hex(io.tell())}")
         for _ in range(self.numPipes):
-            print("dataPipes")
             if operation == IOOperation.READ:
                 self.dataPipes.append(LineNode.new_line_node())
             
             self.dataPipes[-1].from_to_file(io, operation)
         
-        """
-            Wasted data?
-        """
         self.numNogo = io_int(io, self.numNogo, operation)
+        print(f"reading {self.numNogo} noGo at {hex(io.tell())}")
         for i in range(self.numNogo):
-            print("noGo")
             if operation == IOOperation.READ:
                 self.dataNogo.append(NogoZone.new_nogo_zone())
-                print("reading")
             
             self.dataNogo[i].from_to_file(io, operation)
 
@@ -821,6 +830,7 @@ class DestructLevel():
         self.destruct_bbox.from_to_file(io, operation)
 
         self.numCannons = io_int(io, self.numCannons, operation)
+        print(f"reading {self.numDoors} doors at {hex(io.tell())}")
         for i in range(self.numCannons):
             if operation == IOOperation.READ:
                 self.dataCannons.append(TechNode.new_tech_node())
@@ -828,6 +838,7 @@ class DestructLevel():
             self.dataCannons[i].from_to_file(io, operation)
         
         self.numArrowEmitters = io_int(io, self.numArrowEmitters, operation)
+        print(f"reading {self.numArrowEmitters} ArrowEmitters")
         for i in range(self.numArrowEmitters):
             if operation == IOOperation.READ:
                 self.dataArrowEmitters.append(TechNode.new_tech_node())
@@ -835,6 +846,7 @@ class DestructLevel():
             self.dataArrowEmitters[i].from_to_file(io, operation)
         
         self.numDockingPoints = io_int(io, self.numDockingPoints, operation)
+        print(f"reading {self.numDockingPoints} DockingPoints")
         for i in range(self.numDockingPoints):
             if operation == IOOperation.READ:
                 self.dataDockingPoints.append(TechNode.new_tech_node())
@@ -842,6 +854,7 @@ class DestructLevel():
             self.dataDockingPoints[i].from_to_file(io, operation)
         
         self.numSoftCollisions = io_int(io, self.numSoftCollisions, operation)
+        print(f"reading {self.numSoftCollisions} SoftCollisions")
         for i in range(self.numSoftCollisions):
             if operation == IOOperation.READ:
                 self.dataSoftCollisions.append(TechNode.new_tech_node())
@@ -853,6 +866,7 @@ class DestructLevel():
             raise ValueError("Unknown data detected.")
 
         self.numFileRefs = io_int(io, self.numFileRefs, operation)
+        print(f"reading {self.numFileRefs} FileRefs")
         for i in range(self.numFileRefs):
             if operation == IOOperation.READ:
                 self.dataFileRefs.append(FileRef.new_file_ref())
@@ -860,6 +874,7 @@ class DestructLevel():
             self.dataFileRefs[i].from_to_file(io, operation)
         
         self.numEFLines = io_int(io, self.numEFLines, operation)
+        print(f"reading {self.numEFLines} EFLines")
         for i in range(self.numEFLines):
             if operation == IOOperation.READ:
                 self.dataEFLines.append(FileRef.new_file_ref())
@@ -1019,42 +1034,4 @@ class Cs2File:
 
 
 if __name__ == "__main__":
-
-    import glob
-    file_list = glob.glob("files\\cs2_parsed\\*\\*_tech.cs2.parsed")
-
-    file_index = 5
-
-    input_path = Path(file_list[file_index])
-
-    file_name = "garbage/"+input_path.name
-
-    os.makedirs("garbage")
-
-    cs2 = Cs2File.new_cs2file()
-    cs2.read_write_file(input_path.absolute(), 
-                            IOOperation.READ)
-    
-    cs2.read_write_file(file_name,   
-                            IOOperation.WRITE)
-    
-    with open(input_path.absolute(), "rb") as ref_file:
-        with open(file_name, "rb") as output_file:
-            i = 0
-            past_position = -1
-            while True:
-                ref_byte = ref_file.read(1)
-                output_byte = output_file.read(1)
-
-                if ref_file.tell() == past_position:
-                    break
-                else:
-                    past_position = ref_file.tell()
-
-                if ref_byte == output_byte:
-                    i += 1
-                else:
-                    print(f"Error at position {i} : {hex(i)}, ref {ref_byte}, found {output_byte}")
-                    break
-            
-            print("Both files are identical")
+    pass

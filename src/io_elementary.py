@@ -44,7 +44,9 @@ def io_int(io:IO, int_value:int, operation:IOOperation):
 
 def io_float(io:IO, float_value:int, operation:IOOperation):
     if operation == IOOperation.READ:
-        val = struct.unpack(endian+'f', io.read(4))[0]
+        # print(hex(io.tell()))
+        bytes_ = io.read(4)
+        val = struct.unpack(endian+'f', bytes_)[0]
         if debug:
             print(f"Read short {val}, at {io.tell()} : {hex(io.tell())}")
         return val
