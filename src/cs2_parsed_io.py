@@ -1,9 +1,11 @@
 
+import os
+from pathlib import Path
 from typing import IO, Any, List
 
 from io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
 
-debug = True
+debug = False
 
 class SomeBytes():
     length:int
@@ -191,6 +193,7 @@ class TechNode():
     def new_tech_node():
         return TechNode(None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file technode")
         if operation == IOOperation.READ:
             self.nodeName = UnicodeString.new_unicodestring()
             self.NodeTransform = TransformMatrix.new_transform_matrix()
@@ -223,6 +226,9 @@ class FaceEdge():
         self.vertexIndex1 = io_int(io, self.vertexIndex1, operation)
         self.edgeIndex = io_int(io, self.edgeIndex, operation)
         self.unknown = io_int(io, self.unknown, operation)
+
+        if debug:
+            print(f"faceedge : {self.vertexIndex0}, {self.vertexIndex1}, {self.edgeIndex}, {self.unknown}")
 
 class FaceEdgeData():
     edge0:FaceEdge
@@ -280,7 +286,7 @@ class Face():
         if operation == IOOperation.READ:
             self.padding = SomeBytes(1, None)
         else:
-            self.padding = SomeBytes(1, 0)
+            self.padding = SomeBytes(1, b"\x00")
 
         self.padding.from_to_file(io, operation)
         
@@ -318,6 +324,8 @@ class Collision3D():
     def new_collision_3d():
         return Collision3D(None, None, None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file collision3D")
+        
         if operation == IOOperation.READ:
             self.collisionName = UnicodeString.new_unicodestring()
             self.dataVerts = []
@@ -364,6 +372,7 @@ class LineNode():
     def new_line_node():
         return LineNode(None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file linenode")
         if operation == IOOperation.READ:
             self.lineName = UnicodeString.new_unicodestring()
         self.lineName.from_to_file(io, operation)
@@ -385,30 +394,34 @@ class LineNode():
 class NogoZone():
     numLines:int
     dataLines:List[Vec2d]
+    numLinesConnected:List[int]
     
     def __init__(self, 
                     numLines:int,
-                    dataLines:List[Vec2d]):
+                    dataLines:List[Vec2d],
+                    numLinesConnected:List[int]):
         self.numLines = numLines
         self.dataLines = dataLines
+        self.numLinesConnected = numLinesConnected
     def new_nogo_zone():
-        return NogoZone(None, None)
+        return NogoZone(None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         self.numLines = io_int(io, self.numLines, operation)
 
         if operation == IOOperation.READ:
             self.dataLines = []
+            self.numLinesConnected = [0 for _ in range(self.numLines)]
 
         for i in range(self.numLines):
             if operation == IOOperation.READ:
                 self.dataLines.append(Vec2d(None, None))
                 self.dataLines[i].from_to_file(io, operation)
-                numLinesConnected = io_int(io, 0, operation)
-                # TODO : somestuffhere
+                self.numLinesConnected[i] = io_int(io, self.numLinesConnected[i], operation)
+                
             else:
                 self.dataLines[i].from_to_file(io, operation)
-                numLinesConnected = io_int(io, 0, operation)
-                # TODO : somestuffhere
+                self.numLinesConnected[i] = io_int(io, self.numLinesConnected[i], operation)
+                
 
 class Polygon():
     normal:Vec3d
@@ -463,14 +476,17 @@ class Polygon():
 class Platform():
     numPolygons:int
     dataPolygons:List[Polygon]
+    some_int:int
     
     def __init__(self, 
                     numPolygons:int,
-                    dataPolygons:List[Polygon]):
+                    dataPolygons:List[Polygon],
+                    some_int:int):
         self.numPolygons = numPolygons
         self.dataPolygons = dataPolygons
+        self.some_int = some_int
     def new_platform():
-        return Platform(None, None)
+        return Platform(None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         self.numPolygons = io_int(io, self.numPolygons, operation)
 
@@ -484,7 +500,7 @@ class Platform():
             else:
                 self.dataPolygons[i].from_to_file(io, operation)
                 
-        some_stuff = io_int(io, 0, operation)
+        self.some_int = io_int(io, self.some_int, operation)
 
 class SoftCollision():
     nodeName:UnicodeString
@@ -532,6 +548,7 @@ class FileRef():
     def new_file_ref():
         return FileRef(None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file fileref")
         if operation == IOOperation.READ:
             self.fileKey = UnicodeString.new_unicodestring()
             self.fileName = UnicodeString.new_unicodestring()
@@ -567,6 +584,7 @@ class EFLine():
     def new_ef_line():
         return EFLine(None, None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file efline")
         self.lineName.from_to_file(io, operation)
         
         self.lineAction = io_int(io, self.lineAction, operation)
@@ -615,6 +633,8 @@ class DestructLevel():
     collision3dSpecial:List[Collision3D]
     numLines:int
     dataLines:List[LineNode]
+    numNogo:int
+    dataNogo:List[NogoZone]
     numPipes:int
     dataPipes:List[LineNode]
     platforms:Platform
@@ -630,7 +650,11 @@ class DestructLevel():
     dataFileRefs:List[FileRef]
     numEFLines:int
     dataEFLines:List[EFLine]
-    
+    numActionVFX:int
+    ActionVFX:List[TechNode]
+    numAttActionVFX:int
+    attActionVFX:List[VFXAttachment]
+
     def __init__(self, 
                     destructName:UnicodeString,
                     destructIndex:int,
@@ -643,6 +667,8 @@ class DestructLevel():
                     collision3dSpecial:List[Collision3D],
                     numLines:int,
                     dataLines:List[LineNode],
+                    numNogo:int,
+                    dataNogo:List[NogoZone],
                     numPipes:int,
                     dataPipes:List[LineNode],
                     platforms:Platform,
@@ -657,7 +683,11 @@ class DestructLevel():
                     numFileRefs:int,
                     dataFileRefs:List[FileRef],
                     numEFLines:int,
-                    dataEFLines:List[EFLine]):
+                    dataEFLines:List[EFLine],
+                    numActionVFX:int,
+                    ActionVFX:List[TechNode],
+                    numAttActionVFX:int,
+                    attActionVFX:List[VFXAttachment]):
         self.destructName = destructName 
         self.destructIndex = destructIndex 
         self.collision3dMesh = collision3dMesh 
@@ -669,6 +699,8 @@ class DestructLevel():
         self.collision3dSpecial = collision3dSpecial
         self.numLines = numLines 
         self.dataLines = dataLines
+        self.numNogo = numNogo
+        self.dataNogo = dataNogo
         self.numPipes = numPipes 
         self.dataPipes = dataPipes
         self.platforms = platforms 
@@ -684,19 +716,27 @@ class DestructLevel():
         self.dataFileRefs = dataFileRefs
         self.numEFLines = numEFLines 
         self.dataEFLines = dataEFLines
+        self.numActionVFX = numActionVFX
+        self.ActionVFX = ActionVFX
+        self.numAttActionVFX = numAttActionVFX
+        self.attActionVFX = attActionVFX
     def new_destruct_level():
         return DestructLevel(None, None, None, None, None,
                              None, None, None, None, None,
                              None, None, None, None, None,
                              None, None, None, None, None,
-                             None, None, None, None, None, None)
+                             None, None, None, None, None, 
+                             None, None, None, None, None,
+                             None, None)
     
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file destruct level")
         if operation == IOOperation.READ:
             self.collision3dWindows = []
             self.collision3dDoors = []
             self.collision3dSpecial = []
             self.dataLines = []
+            self.dataNogo = []
             self.dataPipes = []
             self.dataCannons = []
             self.dataArrowEmitters = []
@@ -707,6 +747,9 @@ class DestructLevel():
 
             self.destructName = UnicodeString.new_unicodestring()
             self.collision3dMesh = Collision3D.new_collision_3d()
+            
+            self.ActionVFX = []
+            self.attActionVFX = []
 
         self.destructName.from_to_file(io, operation)
         self.destructIndex = io_int(io, self.destructIndex, operation)
@@ -738,6 +781,7 @@ class DestructLevel():
 
         self.numLines = io_int(io, self.numLines, operation)
         for _ in range(self.numLines):
+            print("dataLines")
             if operation == IOOperation.READ:
                 self.dataLines.append(LineNode.new_line_node())
             
@@ -745,6 +789,7 @@ class DestructLevel():
 
         self.numPipes = io_int(io, self.numPipes, operation)
         for _ in range(self.numPipes):
+            print("dataPipes")
             if operation == IOOperation.READ:
                 self.dataPipes.append(LineNode.new_line_node())
             
@@ -753,67 +798,70 @@ class DestructLevel():
         """
             Wasted data?
         """
-        self.numNogo = io_int(io, 0, operation)
-        self.nogo:List[NogoZone] = []
-        for _ in range(self.numNogo):
+        self.numNogo = io_int(io, self.numNogo, operation)
+        for i in range(self.numNogo):
+            print("noGo")
             if operation == IOOperation.READ:
-                self.nogo.append(NogoZone.new_nogo_zone())
+                self.dataNogo.append(NogoZone.new_nogo_zone())
+                print("reading")
             
-            self.nogo[-1].from_to_file(io, operation)
+            self.dataNogo[i].from_to_file(io, operation)
 
+        print("platform")
         if operation == IOOperation.READ:
             self.platforms = Platform.new_platform()
         self.platforms.from_to_file(io, operation)
 
+        print("OPERATION")
         if operation == IOOperation.READ:
             self.destruct_bbox:BoundingBox = BoundingBox.new_bounding_box()
         self.destruct_bbox.from_to_file(io, operation)
 
         self.numCannons = io_int(io, self.numCannons, operation)
-        for _ in range(self.numCannons):
+        for i in range(self.numCannons):
             if operation == IOOperation.READ:
                 self.dataCannons.append(TechNode.new_tech_node())
             
-            self.dataCannons[-1].from_to_file(io, operation)
+            self.dataCannons[i].from_to_file(io, operation)
         
         self.numArrowEmitters = io_int(io, self.numArrowEmitters, operation)
-        for _ in range(self.numArrowEmitters):
+        for i in range(self.numArrowEmitters):
             if operation == IOOperation.READ:
                 self.dataArrowEmitters.append(TechNode.new_tech_node())
             
-            self.dataArrowEmitters[-1].from_to_file(io, operation)
+            self.dataArrowEmitters[i].from_to_file(io, operation)
         
         self.numDockingPoints = io_int(io, self.numDockingPoints, operation)
-        for _ in range(self.numDockingPoints):
+        for i in range(self.numDockingPoints):
             if operation == IOOperation.READ:
                 self.dataDockingPoints.append(TechNode.new_tech_node())
             
-            self.dataDockingPoints[-1].from_to_file(io, operation)
+            self.dataDockingPoints[i].from_to_file(io, operation)
         
         self.numSoftCollisions = io_int(io, self.numSoftCollisions, operation)
-        for _ in range(self.numSoftCollisions):
+        for i in range(self.numSoftCollisions):
             if operation == IOOperation.READ:
                 self.dataSoftCollisions.append(TechNode.new_tech_node())
             
-            self.dataSoftCollisions[-1].from_to_file(io, operation)
+            self.dataSoftCollisions[i].from_to_file(io, operation)
         
         someArray = io_int(io, 0, operation)
         if someArray > 0:
             raise ValueError("Unknown data detected.")
 
         self.numFileRefs = io_int(io, self.numFileRefs, operation)
-        for _ in range(self.numFileRefs):
+        for i in range(self.numFileRefs):
             if operation == IOOperation.READ:
                 self.dataFileRefs.append(FileRef.new_file_ref())
             
-            self.dataFileRefs[-1].from_to_file(io, operation)
+            self.dataFileRefs[i].from_to_file(io, operation)
         
         self.numEFLines = io_int(io, self.numEFLines, operation)
-        for _ in range(self.numEFLines):
+        for i in range(self.numEFLines):
             if operation == IOOperation.READ:
                 self.dataEFLines.append(FileRef.new_file_ref())
             
-            self.dataEFLines[-1].from_to_file(io, operation)
+            self.dataEFLines[i].from_to_file(io, operation)
         
         someArray = io_int(io, 0, operation)
         if someArray > 0:
@@ -822,38 +870,36 @@ class DestructLevel():
         if version == 11:
             return 0.
         else:
-            self.ActionVFX:List[TechNode] = []
-            
-            self.numActionVFX = io_int(io, 0, operation)
-            for _ in range(self.numActionVFX):
+            print("Starting to write VFX")
+            self.numActionVFX = io_int(io, self.numActionVFX, operation)
+            for i in range(self.numActionVFX):
                 if operation == IOOperation.READ:
                     self.ActionVFX.append(TechNode.new_tech_node())
                 
-                self.ActionVFX[-1].from_to_file(io, operation)
+                self.ActionVFX[i].from_to_file(io, operation)
             
             self.numActionVFX = io_int(io, self.numActionVFX, operation)
-            for _ in range(self.numActionVFX):
+            for i in range(self.numActionVFX):
                 if operation == IOOperation.READ:
                     self.ActionVFX.append(TechNode.new_tech_node())
                 
-                self.ActionVFX[-1].from_to_file(io, operation)
+                self.ActionVFX[i].from_to_file(io, operation)
                 
 
-            self.attActionVFX:List[VFXAttachment] = []
-            
-            self.numAttActionVFX = io_int(io, 0, operation)
-            for _ in range(self.numAttActionVFX):
-                if operation == IOOperation.READ:
-                    self.attActionVFX.append(VFXAttachment.new_vfx_attachment())
-                
-                self.attActionVFX[-1].from_to_file(io, operation)
             
             self.numAttActionVFX = io_int(io, self.numAttActionVFX, operation)
-            for _ in range(self.numAttActionVFX):
+            for i in range(self.numAttActionVFX):
                 if operation == IOOperation.READ:
                     self.attActionVFX.append(VFXAttachment.new_vfx_attachment())
                 
-                self.attActionVFX[-1].from_to_file(io, operation)
+                self.attActionVFX[i].from_to_file(io, operation)
+            
+            self.numAttActionVFX = io_int(io, self.numAttActionVFX, operation)
+            for i in range(self.numAttActionVFX):
+                if operation == IOOperation.READ:
+                    self.attActionVFX.append(VFXAttachment.new_vfx_attachment())
+                
+                self.attActionVFX[i].from_to_file(io, operation)
         
         
 
@@ -877,6 +923,7 @@ class BuildingPiece():
     def new_building_piece():
         return BuildingPiece(None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print("from_to_file buildingpiece")
         if operation == IOOperation.READ:
             self.destructs = []
             self.pieceName = UnicodeString.new_unicodestring()
@@ -901,21 +948,24 @@ class BuildingPiece():
             raise ValueError("Unknown array detected.")
 
 class Cs2File:
+    version:int
     bbox:BoundingBox
     flag:TechNode
     piece_count:int
     building_pieces:List[BuildingPiece]
     def __init__(self,
+        version:int,
         bbox:BoundingBox,
         flag:TechNode,
         piece_count:int,
         building_pieces:List[BuildingPiece]):
+        self.version = version
         self.bbox = bbox
         self.flag = flag
         self.piece_count = piece_count
         self.building_pieces = building_pieces
     def new_cs2file():
-        return Cs2File(None, None, None, None)
+        return Cs2File(None, None, None, None, None)
     def read_write_file(self, file_path:str, operation:IOOperation):
         file_open_type = "rb" if operation == IOOperation.READ else "wb"
 
@@ -925,25 +975,25 @@ class Cs2File:
             print(f"Starting to write file : {file_path}")
 
         with open(file_path, file_open_type) as f:
-            version = io_int(f, 11, operation)
-            print(f"Version found : {version}")
+            self.version = io_int(f, self.version, operation)
+            print(f"Version found : {self.version}")
 
-            if not version in [11, 13]:
-                raise ValueError(f"Version {version} is not supported.")
+            if not self.version in [11, 13]:
+                raise ValueError(f"Version {self.version} is not supported.")
 
             if operation == IOOperation.READ:
                 self.bbox = BoundingBox.new_bounding_box()
-            self.bbox.from_to_file(f, operation, version = version)
+            self.bbox.from_to_file(f, operation, version = self.version)
 
             if operation == IOOperation.READ:
                 self.flag = TechNode.new_tech_node()
-            self.flag.from_to_file(f, operation, version = version)
+            self.flag.from_to_file(f, operation, version = self.version)
 
             some_array_size = io_int(f, 0, operation)
             if some_array_size > 0:
                 raise ValueError("Unknown data detected.")
             
-            self.piece_count = io_int(f, 0, operation)
+            self.piece_count = io_int(f, self.piece_count, operation)
             print(f"Reading {self.piece_count} pieces.")
             
             if operation == IOOperation.READ:
@@ -952,24 +1002,46 @@ class Cs2File:
                     self.building_pieces.append(BuildingPiece.new_building_piece())
 
             for i in range(self.piece_count):
-                self.building_pieces[i].from_to_file(f, operation, version=version)
+                self.building_pieces[i].from_to_file(f, operation, version=self.version)
 
 
 if __name__ == "__main__":
 
     import glob
+    file_list = glob.glob("files\\cs2_parsed\\*\\*_tech.cs2.parsed")
 
-    file_list = glob.glob("C:\\Users\\tm787802\\Documents\\Workspace\\AtillaBlender\\files\\cs2_parsed\\*\\*_tech.cs2.parsed")
+    file_index = 5
+
+    input_path = Path(file_list[file_index])
+
+    file_name = "garbage/"+input_path.name
+
+    os.makedirs("garbage")
 
     cs2 = Cs2File.new_cs2file()
-    cs2.read_write_file(file_list[0], 
+    cs2.read_write_file(input_path.absolute(), 
                             IOOperation.READ)
     
-    # for file in file_list:
-    #     try:
-    #         cs2 = Cs2File.new_cs2file()
-    #         cs2.read_write_file(file, 
-    #                                 IOOperation.READ)
-    #     except ValueError:
-    #         pass
+    cs2.read_write_file(file_name,   
+                            IOOperation.WRITE)
+    
+    with open(input_path.absolute(), "rb") as ref_file:
+        with open(file_name, "rb") as output_file:
+            i = 0
+            past_position = -1
+            while True:
+                ref_byte = ref_file.read(1)
+                output_byte = output_file.read(1)
 
+                if ref_file.tell() == past_position:
+                    break
+                else:
+                    past_position = ref_file.tell()
+
+                if ref_byte == output_byte:
+                    i += 1
+                else:
+                    print(f"Error at position {i} : {hex(i)}, ref {ref_byte}, found {output_byte}")
+                    break
+            
+            print("Both files are identical")
