@@ -8,7 +8,7 @@ sys.path.append((package_path/"src").name)
 
 from io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
 
-debug = False
+debug = True
 
 class SomeBytes():
     length:int
@@ -17,7 +17,9 @@ class SomeBytes():
         self.length = length
         self.value = value
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+        print(self.value, hex(io.tell()))
         self.value, self.length = io_bytes(io, self.value, self.length, operation)
+        print(self.value, hex(io.tell()))
         if debug:
             print(f"bytes of length {self.length} : {self.value}")
 
@@ -468,13 +470,17 @@ class Polygon():
         else:
             self.somebyte_1 = SomeBytes(1, b"\x00")
             self.somebyte_2 = SomeBytes(1, b"\x00")
-            self.groundPlatformByte = SomeBytes(1, b"\x00")
+            if self.isPlatformGround:
+                self.groundPlatformByte = SomeBytes(1, b"\x01")
+            else:
+                self.groundPlatformByte = SomeBytes(1, b"\x00")
 
         self.somebyte_1.from_to_file(io, operation)
 
         self.groundPlatformByte.from_to_file(io, operation)
 
         self.isPlatformGround = self.groundPlatformByte.value != b"\x00"
+        print("Platform", self.groundPlatformByte.value, self.isPlatformGround, "at", hex(io.tell()))
         
         self.somebyte_2.from_to_file(io, operation)
 
@@ -601,6 +607,7 @@ class EFLine():
             self.lineEnd = Vec3d.new_vec3d()
             self.lineDir = Vec3d.new_vec3d()
         self.lineName.from_to_file(io, operation)
+        
         print(f"Reading {self.lineName}")
         
         self.lineAction = io_int(io, self.lineAction, operation)
@@ -610,6 +617,11 @@ class EFLine():
         self.lineDir.from_to_file(io, operation)
 
         self.parentIndex = io_int(io, self.parentIndex, operation)
+
+        print(f"line {self.lineName.value}, parent {self.parentIndex}")
+        print(f"start {self.lineStart.x}, {self.lineStart.y}, {self.lineStart.z}")
+        print(f"End {self.lineEnd.x}, {self.lineEnd.y}, {self.lineEnd.z}")
+        print(f"Dir {self.lineDir.x}, {self.lineDir.y}, {self.lineDir.z}")
 
 class VFXAttachment():
     numIndices:int
@@ -745,7 +757,7 @@ class DestructLevel():
                              None, None, None, None, None,
                              None, None)
     
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+    def from_to_file(self, io:IO, operation:IOOperation, version = 11, has_vfx = False):
         print("from_to_file destruct level")
         if operation == IOOperation.READ:
             self.collision3dWindows = []
@@ -889,15 +901,16 @@ class DestructLevel():
             raise ValueError("Unknown data detected.")
         
         
-        if operation == IOOperation.READ:
-            current_position = io.tell()
-            
-            has_vfx = io_int(io, 0, operation) != 0
+        # if operation == IOOperation.READ:
+        #     print(f"VFX start {hex(io.tell())}")
+        #     current_position = io.tell()
 
-            io.seek(current_position)
+        #     has_vfx = io_int(io, 0, operation) != 0
+
+        #     io.seek(current_position)
         
-        else:
-            has_vfx = True
+        # if operation == IOOperation.WRITE:
+        #     has_vfx = True
 
         if has_vfx:
             print("Starting to read/write VFX")
@@ -953,7 +966,7 @@ class BuildingPiece():
         self.destructs = destructs
     def new_building_piece():
         return BuildingPiece(None, None, None, None, None)
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+    def from_to_file(self, io:IO, operation:IOOperation, version = 11, has_vfx = False):
         print("from_to_file buildingpiece")
         if operation == IOOperation.READ:
             self.destructs = []
@@ -967,12 +980,13 @@ class BuildingPiece():
         self.parentIndex = io_int(io, self.parentIndex, operation)
         self.destructCount = io_int(io, self.destructCount, operation)
 
+        print(f"Loading {self.destructCount} destruct level at {hex(io.tell())}.")
         for i in range(self.destructCount):
             if operation == IOOperation.READ:
                 self.destructs.append(DestructLevel.new_destruct_level())
-                self.destructs[i].from_to_file(io, operation)
+                self.destructs[i].from_to_file(io, operation, has_vfx = has_vfx)
             else:
-                self.destructs[i].from_to_file(io, operation)
+                self.destructs[i].from_to_file(io, operation, has_vfx = has_vfx)
                 
         array_size = io_int(io, 0, operation)
 
@@ -998,7 +1012,7 @@ class Cs2File:
         self.building_pieces = building_pieces
     def new_cs2file():
         return Cs2File(None, None, None, None, None)
-    def read_write_file(self, file_path:str, operation:IOOperation):
+    def read_write_file(self, file_path:str, operation:IOOperation, has_vfx = False):
         file_open_type = "rb" if operation == IOOperation.READ else "wb"
 
         if operation == IOOperation.READ:
@@ -1025,6 +1039,7 @@ class Cs2File:
             if some_array_size > 0:
                 raise ValueError("Unknown data detected.")
             
+            print(f"Position : {hex(f.tell())}")
             self.piece_count = io_int(f, self.piece_count, operation)
             print(f"Reading {self.piece_count} pieces.")
             
@@ -1034,7 +1049,7 @@ class Cs2File:
                     self.building_pieces.append(BuildingPiece.new_building_piece())
 
             for i in range(self.piece_count):
-                self.building_pieces[i].from_to_file(f, operation, version=self.version)
+                self.building_pieces[i].from_to_file(f, operation, version=self.version, has_vfx=has_vfx)
 
 
 if __name__ == "__main__":
