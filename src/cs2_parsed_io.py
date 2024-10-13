@@ -942,10 +942,10 @@ class DestructLevel():
 
         if has_vfx:
             if debug:
-            print("Starting to read/write VFX")
+                print("Starting to read/write VFX")
             self.numActionVFX = io_int(io, self.numActionVFX, operation)
             if debug:
-            print(f"Found {self.numActionVFX} ActionVFX")
+                print(f"Found {self.numActionVFX} ActionVFX")
             for i in range(self.numActionVFX):
                 if operation == IOOperation.READ:
                     self.ActionVFX.append(TechNode.new_tech_node())
