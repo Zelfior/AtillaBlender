@@ -64,6 +64,7 @@ class Cs2ToBlender:
         
         self.make_collision3d(bp.destructName, bp.collision3dMesh, transform_matrixes)
         
+        # TODO: les collections associees
         for i in range(bp.numWindows):
             self.make_collision3d(bp.destructName, bp.collision3dWindows[i], transform_matrixes)
         
@@ -95,10 +96,12 @@ class Cs2ToBlender:
 
         bp.numSoftCollisions:int
         bp.dataSoftCollisions:List[SoftCollision]
+
         bp.numFileRefs:int
         bp.dataFileRefs:List[FileRef]
-        bp.numEFLines:int
-        bp.dataEFLines:List[EFLine]
+
+        for i in range(bp.numEFLines):
+            self.make_efline(bp.destructName, bp.dataEFLines[i], transform_matrixes)
 
         for i in range(bp.numActionVFX):
             self.make_tech_node(bp.destructName, bp.ActionVFX[i], transform_matrixes)
@@ -151,8 +154,12 @@ class Cs2ToBlender:
     def make_pipe(self,):
         ...
 
-    def make_efline(self,):
-        ...
+    def make_efline(self, collection_name:str, ln:EFLine, transform_matrixes:List[TransformMatrix]):
+        
+        self.me.make_object_from_data(ln.lineName, [ln.lineStart, ln.lineEnd], [(0, 1)], [])
+        self.cm.move_object_to_collection(ln.lineName, collection_name)
+
+        self.apply_transform_matrixes(ln.lineName, transform_matrixes)
 
     def make_unknown(self,):
         ...
