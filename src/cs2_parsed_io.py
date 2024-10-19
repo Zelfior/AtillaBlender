@@ -1,4 +1,5 @@
 
+import struct
 import os, sys
 from pathlib import Path
 from typing import IO, Any, List
@@ -67,8 +68,8 @@ class Vec3d():
         return Vec3d(None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         self.x = io_float(io, self.x, operation)
-        self.y = io_float(io, self.y, operation)
         self.z = io_float(io, self.z, operation)
+        self.y = io_float(io, self.y, operation)
 
         if debug:
             print(f"vec2d ({self.x}, {self.y}, {self.z})")
@@ -158,7 +159,10 @@ class TransformMatrix():
         self.row2_col3 = row2_col3
         self.row3_col3 = row3_col3
     def new_transform_matrix():
-        return TransformMatrix(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+        return TransformMatrix(1, 0, 0, 0, 
+                               0, 1, 0, 0, 
+                               0, 0, 1, 0, 
+                               0, 0, 0, 1)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         self.row0_col0 = io_float(io, self.row0_col0, operation)
         self.row1_col0 = io_float(io, self.row1_col0, operation)
@@ -180,11 +184,19 @@ class TransformMatrix():
         if debug:
             print(f"transform matrix {self.to_matrix()}")
 
+        print(self)
+
     def to_matrix(self,):
-        return [[self.row0_col0, self.row0_col1, self.row0_col2],
-                [self.row1_col0, self.row1_col1, self.row1_col2],
-                [self.row2_col0, self.row2_col1, self.row2_col2],
-                [self.row3_col0, self.row3_col2, self.row3_col1]]
+        return [[self.row0_col0, self.row0_col1, self.row0_col2, self.row0_col3],
+                [self.row1_col0, self.row1_col1, self.row1_col2, self.row1_col3],
+                [self.row2_col0, self.row2_col1, self.row2_col2, self.row2_col3],
+                [self.row3_col0, self.row3_col1, self.row3_col2, self.row3_col3]]
+    
+    def __repr__(self,):
+        return f"| {self.row0_col0},\t{self.row0_col1},\t{self.row0_col2},\t{self.row0_col3} |\n" +\
+               f"| {self.row1_col0},\t{self.row1_col1},\t{self.row1_col2},\t{self.row1_col3} |\n" +\
+               f"| {self.row2_col0},\t{self.row2_col1},\t{self.row2_col2},\t{self.row2_col3} |\n" +\
+               f"| {self.row3_col0},\t{self.row3_col1},\t{self.row3_col2},\t{self.row3_col3} |\n"
 
 
 class TechNode():
@@ -608,7 +620,7 @@ class EFLine():
         self.lineDir = lineDir
         self.parentIndex = parentIndex
     def new_ef_line():
-        return EFLine(None, None, None, None, None, None)
+        return EFLine(None, None, None, None, None, -1)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         if debug:
             print("from_to_file efline")
@@ -629,6 +641,7 @@ class EFLine():
         self.lineDir.from_to_file(io, operation)
 
         self.parentIndex = io_int(io, self.parentIndex, operation)
+        print("Parent index", self.parentIndex)
 
         if debug:
             print(f"line {self.lineName.value}, parent {self.parentIndex}")
@@ -995,7 +1008,7 @@ class BuildingPiece():
         self.destructCount = destructCount
         self.destructs = destructs
     def new_building_piece():
-        return BuildingPiece(None, None, None, None, None)
+        return BuildingPiece(None, None, -1, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11, has_vfx = False):
         if debug:
             ("from_to_file buildingpiece")
@@ -1009,6 +1022,7 @@ class BuildingPiece():
         self.placementNode.from_to_file(io, operation)
         
         self.parentIndex = io_int(io, self.parentIndex, operation)
+        print("Parent index", self.parentIndex)
         self.destructCount = io_int(io, self.destructCount, operation)
 
         if debug:
@@ -1082,7 +1096,21 @@ class Cs2File:
 
             for i in range(self.piece_count):
                 self.building_pieces[i].from_to_file(f, operation, version=self.version, has_vfx=has_vfx)
-
-
+    
 if __name__ == "__main__":
-    pass
+    input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\30_30_10\\30_30_10_tech.cs2.parsed")
+    input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\arena\\arena_tech.cs2.parsed")
+    input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\athens_acropolis\\athens_acropolis_tech.cs2.parsed")
+    input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\attila_cliff_01\\attila_cliff_01_tech.cs2.parsed")
+    cs2 = Cs2File.new_cs2file()
+
+    has_ = True
+
+    try:
+        cs2.read_write_file(input_path.absolute(), 
+                                IOOperation.READ, has_vfx=True)
+    except struct.error:
+        cs2.read_write_file(input_path.absolute(), 
+                                IOOperation.READ, has_vfx=False)
+        has_ = False
+        
