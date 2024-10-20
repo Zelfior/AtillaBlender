@@ -75,10 +75,17 @@ class Cs2ToBlender:
         
         for i in range(bp.numLines):
             self.make_line(bp.destructName, bp.dataLines[i], transform_matrixes, closed=True)
+        
+        for i in range(bp.numNogo):
+            nogo = bp.dataNogo[i]
 
-        bp.numNogo:int
-        bp.dataNogo:List[NogoZone]
+            fake_line = LineNode(f"nogo_{i}", 
+                                    len(nogo.dataLines), 
+                                    [(nogo.dataLines[j][0], nogo.dataLines[j][1], 0.) for j in range(len(nogo.dataLines))]
+                                    , 0)
             
+            self.make_line(bp.destructName, fake_line, transform_matrixes, closed=True)
+
         for i in range(bp.numPipes):
             self.make_line(bp.destructName, bp.dataPipes[i], transform_matrixes, closed = False)
 
@@ -93,18 +100,20 @@ class Cs2ToBlender:
         for i in range(bp.numDockingPoints):
             self.make_tech_node(bp.destructName, bp.dataDockingPoints[i], transform_matrixes)
 
-        bp.numSoftCollisions:int
-        bp.dataSoftCollisions:List[SoftCollision]
-        bp.numFileRefs:int
-        bp.dataFileRefs:List[FileRef]
-        bp.numEFLines:int
-        bp.dataEFLines:List[EFLine]
+        for i in range(bp.numSoftCollisions):
+            self.make_soft_collision(bp.destructName, bp.dataSoftCollisions[i], transform_matrixes)
+            
+        for i in range(bp.numFileRefs):
+            self.make_file_ref(bp.destructName, bp.dataFileRefs[i], transform_matrixes)
+
+        for i in range(bp.numEFLines):
+            self.make_efline(bp.destructName, bp.dataEFLines[i], transform_matrixes)
 
         for i in range(bp.numActionVFX):
             self.make_tech_node(bp.destructName, bp.ActionVFX[i], transform_matrixes)
 
-        bp.numAttActionVFX:int
-        bp.attActionVFX:List[VFXAttachment]
+        for i in range(bp.numAttActionVFX):
+            self.make_vfx_attachment(bp.destructName, bp.attActionVFX[i], transform_matrixes)
 
     def make_cs2(self, cs2:Cs2File, name:str):
         self.cm.new_collection(f"cs2_parsed_{name}_collection")
@@ -120,6 +129,15 @@ class Cs2ToBlender:
     def make_tech_node(self, collection_name:str, t:TechNode, transform_matrixes:List[TransformMatrix]):
         t.nodeName
         t.NodeTransform
+
+        empty = bpy.ops.object.empty_add(type='PLAIN_AXES', 
+                                            align='WORLD', 
+                                            location=(2, 2, 0), 
+                                            rotation=(0.872665, 0.872665, 0), 
+                                            scale=(1, 1, 1))
+
+        empty.name = t.nodeName
+
         #   TODO
 
 
@@ -138,24 +156,37 @@ class Cs2ToBlender:
 
             # TODO: "revert normals?"
 
-            # TODO: ground attribute
+            # TODO: separate ground from platform
 
         self.me.make_object_from_data(collection_name+"_platform", verts, [], faces)
         self.cm.move_object_to_collection(collection_name+"_platform", collection_name)
 
         self.apply_transform_matrixes(collection_name+"_platform", transform_matrixes)
 
-    def make_hard(self,):
-        ...
+    def make_file_ref(self, collection_name:str, fr:FileRef, transform_matrixes:List[TransformMatrix]):
+        fr.fileKey
+        fr.fileTransform
 
-    def make_pipe(self,):
-        ...
+    def make_soft_collision(self, collection_name:str, sc:SoftCollision, transform_matrixes:List[TransformMatrix]):
+        
+        cyl:bpy.types.Object = bpy.ops.mesh.primitive_cylinder_add(radius=sc.cylinderRadius, 
+                                                    depth=sc.cylinderHeight, 
+                                                    enter_editmode=False, 
+                                                    align='WORLD', 
+                                                    location=(0, 0, 0), 
+                                                    scale=(1, 1, 1))
+        
+        cyl.name = sc.nodeName
 
-    def make_efline(self,):
-        ...
+        self.cm.move_object_to_collection(collection_name, collection_name)
 
-    def make_unknown(self,):
-        ...
+        self.apply_transform_matrixes(collection_name, transform_matrixes)
+
+    def make_efline(self, collection_name:str, ef:EFLine, transform_matrixes:List[TransformMatrix]):
+        self.me.make_object_from_data(ef.lineName, [ef.lineStart, ef.lineEnd], [(0, 1)], [])
+        self.cm.move_object_to_collection(ef.lineName, collection_name)
+
+        self.apply_transform_matrixes(ef.lineName, transform_matrixes)
 
     def make_collision3d(self, collection_name:str, c3d:Collision3D, transform_matrixes:List[TransformMatrix]):
         
@@ -176,8 +207,5 @@ class Cs2ToBlender:
 
         self.apply_transform_matrixes(ln.lineName, transform_matrixes)
 
-    def make_vfx(self,):
-        ...
-
-    def make_vfx2(self,):
-        ...
+    def make_vfx_attachment(self, collection_name:str, ln:VFXAttachment, transform_matrixes:List[TransformMatrix]):
+        raise NotImplementedError("Build a blender version of VFXAttachment was not implemented.")
