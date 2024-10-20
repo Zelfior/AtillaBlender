@@ -64,6 +64,7 @@ class Cs2ToBlender:
         
         self.make_collision3d(bp.destructName, bp.collision3dMesh, transform_matrixes)
         
+        # TODO: les collections associees
         for i in range(bp.numWindows):
             self.make_collision3d(bp.destructName, bp.collision3dWindows[i], transform_matrixes)
         
