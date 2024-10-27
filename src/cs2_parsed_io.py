@@ -787,8 +787,8 @@ class DestructLevel():
                              None, None, None, None, None,
                              None, None, None, None, None,
                              None, None, None, None, None, 
-                             None, None, None, None, None,
-                             None, None)
+                             None, None, None, 0, None,
+                             0, None)
     
     def from_to_file(self, io:IO, operation:IOOperation, version = 11, has_vfx = False):
         if debug:

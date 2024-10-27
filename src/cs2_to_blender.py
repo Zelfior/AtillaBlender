@@ -12,13 +12,6 @@ class Cs2ToBlender:
         self.cm = CollectionManager()
         self.me = MeshEditor()
 
-    def apply_transform_matrixes(self, object_name:str, matrixes_list:List[TransformMatrix]):
-        pass
-        # obj:bpy.types.Object = bpy.data.objects[object_name]
-
-        # matrix = ...
-
-        # obj.matrix_world = matrix
 
     def make_bounding_box_data(self, bb:BoundingBox):
         vertex_list:List[Tuple[float, float, float]] = [(bb.minX, bb.minY, bb.minZ),
@@ -145,7 +138,7 @@ class Cs2ToBlender:
                                     [(nogo.dataLines[j].x, nogo.dataLines[j].y, 0.) for j in range(len(nogo.dataLines))]
                                     , 0)
             
-            self.make_line(nogo_collection, fake_line, transform_matrixes, closed=True)
+            self.make_line(nogo_collection, fake_line, transform_matrixes, closed=True, swap_yz = False)
 
         for i in range(destruct.numPipes):
             self.make_line(pipes_collection, destruct.dataPipes[i], transform_matrixes, closed = False)
@@ -196,7 +189,7 @@ class Cs2ToBlender:
             t.nodeName.value = collection_name+"_tech_node"
         print(f"Making tech node {t.nodeName.value}")
 
-        empty = self.me.make_empty(t.nodeName.value, t.NodeTransform.to_matrix(transpose=True))
+        empty = self.me.make_empty(t.nodeName.value, t.NodeTransform)
 
         self.cm.move_object_to_collection(empty, collection_name)
         
@@ -215,13 +208,13 @@ class Cs2ToBlender:
         for pol in p.dataPolygons:
             if pol.isPlatformGround:
                 ground_verts += pol.dataVerts
-                ground_faces += [vert_count_ground+i for i in range(len(pol.dataVerts))]
+                ground_faces += [[vert_count_ground+i for i in range(len(pol.dataVerts))]]
 
                 vert_count_ground = len(ground_verts) 
 
             else:
                 platform_verts += pol.dataVerts
-                platform_faces += [vert_count_platform+i for i in range(len(pol.dataVerts))]
+                platform_faces += [[vert_count_platform+i for i in range(len(pol.dataVerts))]]
 
                 vert_count_platform = len(platform_verts) 
 
@@ -229,19 +222,19 @@ class Cs2ToBlender:
             ob = self.me.make_object_from_data(collection_name+"_platform", platform_verts, [], platform_faces)
             self.cm.move_object_to_collection(ob, collection_name)
 
-            self.apply_transform_matrixes(collection_name+"_platform", transform_matrixes)
+            # self.apply_transform_matrixes(collection_name+"_platform", transform_matrixes)
 
         if len(ground_verts) > 0:
             ob = self.me.make_object_from_data(collection_name+"_ground", ground_verts, [], ground_faces)
             self.cm.move_object_to_collection(ob, collection_name)
 
-            self.apply_transform_matrixes(collection_name+"_ground", transform_matrixes)
+            # self.apply_transform_matrixes(collection_name+"_ground", transform_matrixes)
             
         # TODO: "revert normals?"
 
     def make_file_ref(self, collection_name:str, fr:FileRef, transform_matrixes:List[TransformMatrix]):  
         print(f"Making file reference {fr.fileKey.value}")
-        empty = self.me.make_empty(fr.fileKey.value, fr.fileTransform.to_matrix(transpose=True))
+        empty = self.me.make_empty(fr.fileKey.value, fr.fileTransform)
         
         self.cm.move_object_to_collection(empty, collection_name)
         
@@ -250,27 +243,30 @@ class Cs2ToBlender:
     def make_soft_collision(self, collection_name:str, sc:SoftCollision, transform_matrixes:List[TransformMatrix]):
         print(f"Making soft collision {sc.nodeName.value}")
         
-        cyl:bpy.types.Object = bpy.ops.mesh.primitive_cylinder_add(radius=sc.cylinderRadius, 
+        bpy.ops.mesh.primitive_cylinder_add(radius=sc.cylinderRadius, 
                                                     depth=sc.cylinderHeight, 
                                                     enter_editmode=False, 
                                                     align='WORLD', 
-                                                    location=(0, 0, 0), 
+                                                    location=(0, 0, sc.cylinderHeight), 
                                                     rotation=(0, 0, 0), 
-                                                    scale=(1, 1, 1))
+                                                    scale=(sc.cylinderRadius, sc.cylinderRadius, sc.cylinderHeight))
         
+        cyl:bpy.types.Object = bpy.context.view_layer.objects.active
         self.cm.rename_object(cyl, sc.nodeName.value)
-        cyl.matrix_world = sc.nodeTransform.to_matrix(transpose=True)
+        self.me.apply_transform_matrix(cyl.name, sc.nodeTransform)
+        
+        bpy.data.objects[cyl.name].location.z += sc.cylinderHeight
 
         self.cm.move_object_to_collection(cyl.name, collection_name)
 
-        self.apply_transform_matrixes(collection_name, transform_matrixes)
+        # self.me.apply_transform_matrixes(collection_name, transform_matrixes)
 
     def make_efline(self, collection_name:str, ef:EFLine, transform_matrixes:List[TransformMatrix]):
         print(f"Making efline {ef.lineName.value}")
         ob = self.me.make_object_from_data(ef.lineName.value, [ef.lineStart, ef.lineEnd], [(0, 1)], [])
         self.cm.move_object_to_collection(ob, collection_name)
 
-        self.apply_transform_matrixes(ef.lineName.value, transform_matrixes)
+        # self.apply_transform_matrixes(ef.lineName.value, transform_matrixes)
 
     def make_collision3d(self, collection_name:str, c3d:Collision3D, transform_matrixes:List[TransformMatrix]):
         print(f"Making collision 3d {c3d.collisionName.value}")
@@ -278,19 +274,19 @@ class Cs2ToBlender:
         ob = self.me.make_object_from_data(c3d.collisionName.value, c3d.dataVerts, [], c3d.dataFaces)
         self.cm.move_object_to_collection(ob, collection_name)
 
-        self.apply_transform_matrixes(c3d.collisionName.value, transform_matrixes)
+        # self.apply_transform_matrixes(c3d.collisionName.value, transform_matrixes)
 
-    def make_line(self, collection_name:str, ln:LineNode, transform_matrixes:List[TransformMatrix], closed = False):
+    def make_line(self, collection_name:str, ln:LineNode, transform_matrixes:List[TransformMatrix], closed = False, swap_yz = True):
         print(f"Making line {ln.lineName.value}")
         
         edges = [(i, i+1) for i in range(len(ln.dataVerts) - 1)]
         if closed:
             edges.append((len(ln.dataVerts)-1, 0))
 
-        ob = self.me.make_object_from_data(ln.lineName.value, ln.dataVerts, edges, [])
+        ob = self.me.make_object_from_data(ln.lineName.value, ln.dataVerts, edges, [], swap_yz=swap_yz)
         self.cm.move_object_to_collection(ob, collection_name)
 
-        self.apply_transform_matrixes(ln.lineName.value, transform_matrixes)
+        # self.apply_transform_matrixes(ln.lineName.value, transform_matrixes)
 
     def make_vfx_attachment(self, collection_name:str, vfxA:VFXAttachment, transform_matrixes:List[TransformMatrix]):
         print(vfxA, vfxA.dataIndices)

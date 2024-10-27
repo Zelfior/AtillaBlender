@@ -1,14 +1,14 @@
 
 bl_info = {
     # required
-    'name': 'TotalWarAtillaCS2Exporter',
+    'name': 'TotalWarAttilaCS2Exporter',
     'blender': (3,4,1),
     'category': 'Object',
-    "location": "View3D > Sidebar > Atilla",
+    "location": "View3D > Sidebar > Attila",
     # optional
     'version': (0, 1, 0),
     'author': 'Zelfior',
-    'description': 'Exports Atilla Totalwar .cs2.parsed files.',
+    'description': 'Exports Attila Totalwar .cs2.parsed files.',
 }
 
 import bpy
@@ -20,6 +20,8 @@ from src.cs2_parsed_io import Cs2File
 from src.cs2_to_blender import Cs2ToBlender
 from src.io_elementary import IOOperation, UnknownData
 
+import struct
+
 # == GLOBAL VARIABLES
 PROPS = [
     ('input_file', bpy.props.StringProperty(name='.cs2.parsed input file', default='//TBD')),
@@ -30,24 +32,24 @@ PROPS = [
 
 
 # == PANELS
-class ATILLA_HT_panel(bpy.types.Panel):
+class Attila_HT_panel(bpy.types.Panel):
     
-    bl_idname = 'ATILLA_HT_panel'
-    bl_label = 'Atilla import/export'
+    bl_idname = 'Attila_HT_panel'
+    bl_label = 'Attila import/export'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Atilla" 
+    bl_category = "Attila" 
     
     def draw(self, context:bpy.types.Context):
         layout = self.layout
-        layout.label(text="Totalwar Atilla input files import/export.")
+        layout.label(text="Totalwar Attila input files import/export.")
 
 # == PANELS
 class IMPORT_PT_panel(bpy.types.Panel):
     
-    bl_parent_id = "ATILLA_HT_panel"
+    bl_parent_id = "Attila_HT_panel"
     bl_idname = 'IMPORT_PT_panel'
-    bl_label = 'Atilla .cs2.parsed file'
+    bl_label = 'Attila .cs2.parsed file'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     
@@ -105,12 +107,12 @@ class file_loader_OT_input(bpy.types.Operator):
             cs2_object.read_write_file(context.scene.input_file, IOOperation.READ, has_vfx=True)
             context.scene.input_message = "Loaded file with VFX objects."
             context.scene.input_error = False
-        except UnknownData:
+        except (UnknownData, struct.error):
             try:
                 cs2_object.read_write_file(context.scene.input_file, IOOperation.READ, has_vfx=False)
                 context.scene.input_message = "Loaded file without VFX objects."
                 context.scene.input_error = False
-            except UnknownData:
+            except (UnknownData, struct.error):
                 context.scene.input_message = "File can't be read, please contact the extension author."
                 context.scene.input_error = True
                 return {'FINISHED'}
@@ -126,7 +128,7 @@ class file_loader_OT_input(bpy.types.Operator):
 
 # == MAIN ROUTINE
 CLASSES = [
-    ATILLA_HT_panel,
+    Attila_HT_panel,
     IMPORT_PT_panel,
     EXPLORER_OT_import,
     file_loader_OT_input,

@@ -3,7 +3,7 @@ import bpy
 import bmesh
 
 from src.collection_manager import CollectionManager
-from src.cs2_parsed_io import Vec3d, Face
+from src.cs2_parsed_io import Vec3d, Face, TransformMatrix
 
 
 """
@@ -19,6 +19,21 @@ class MeshEditor:
 
         self.cm = CollectionManager()
         
+    def apply_transform_matrix(self, object_name:str, matrix:TransformMatrix):
+        obj:bpy.types.Object = bpy.data.objects[object_name]
+
+        mat = matrix.to_matrix(transpose=True)
+
+        col_save = mat[1]
+        mat[1] = mat[2]
+        mat[2] = col_save
+
+        for i in range(4):
+            e_save = mat[i][1]
+            mat[i][1] = mat[i][2]
+            mat[i][2] = e_save
+
+        obj.matrix_world = mat
 
     """
         Goes to edit mode, if an object is selected and not already in edit mode, its data are stored, and the bmesh is created.
@@ -96,7 +111,8 @@ class MeshEditor:
                               object_name:str, 
                               vertex_list:List[Tuple[float, float, float] | Vec3d], 
                               edge_list:List[Tuple[int, int]], 
-                              face_list:List[List[float] | Face]):
+                              face_list:List[List[float] | Face],
+                              swap_yz = True):
         
         me = bpy.data.meshes.new(f"{object_name}_name")
         self.cm.rename_object(me, f"{object_name}_name")
@@ -105,6 +121,10 @@ class MeshEditor:
 
         v_list = [[v.x, v.y, v.z] if isinstance(v, Vec3d) else v for v in vertex_list]
         f_list = [[f.vertIndex0, f.vertIndex1, f.vertIndex2] if isinstance(f, Face) else f for f in face_list]
+
+        if swap_yz:
+            for i in range(len(v_list)):
+                v_list[i] = [v_list[i][0], v_list[i][2], v_list[i][1]]
 
         # Make a mesh from a list of vertices/edges/faces
         me.from_pydata(v_list, edge_list, f_list)
@@ -125,6 +145,6 @@ class MeshEditor:
         empty:bpy.types.Object = bpy.context.view_layer.objects.active #bpy.data.objects[-1]
         self.cm.rename_object(empty, empty_name)
 
-        empty.matrix_world = matrix
+        self.apply_transform_matrix(empty_name, matrix)
 
         return empty
