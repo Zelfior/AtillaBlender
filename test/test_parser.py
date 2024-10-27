@@ -6,10 +6,9 @@ import sys
 import struct
 
 package_path = Path(__file__).absolute().parent.parent
-sys.path.append((package_path/"src").name)
 
-from cs2_parsed_io import Cs2File
-from io_elementary import IOOperation
+from src.cs2_parsed_io import Cs2File
+from src.io_elementary import IOOperation
 
 
 def run_test(file_path):
@@ -31,10 +30,12 @@ def run_test(file_path):
 
     try:
         cs2.read_write_file(input_path.absolute(), 
-                                IOOperation.READ, has_vfx=True)
+                                IOOperation.READ, 
+                                has_vfx=True)
     except struct.error:
         cs2.read_write_file(input_path.absolute(), 
-                                IOOperation.READ, has_vfx=False)
+                                IOOperation.READ, 
+                                has_vfx=False)
         has_ = False
         
 

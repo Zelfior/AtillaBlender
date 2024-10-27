@@ -1,13 +1,9 @@
 
 import struct
-import os, sys
 from pathlib import Path
 from typing import IO, Any, List
 
-package_path = Path(__file__).absolute().parent.parent
-sys.path.append((package_path/"src").name)
-
-from io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
+from src.io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
 
 debug = False
 
@@ -66,13 +62,18 @@ class Vec3d():
         self.z = z
     def new_vec3d():
         return Vec3d(None, None, None)
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11):
+    def from_to_file(self, io:IO, operation:IOOperation, version = 11, inverse = True):
         self.x = io_float(io, self.x, operation)
-        self.z = io_float(io, self.z, operation)
-        self.y = io_float(io, self.y, operation)
+        inverse = False
+        if inverse:
+            self.z = io_float(io, self.z, operation)
+            self.y = io_float(io, self.y, operation)
+        else:
+            self.y = io_float(io, self.y, operation)
+            self.z = io_float(io, self.z, operation)
 
         if debug:
-            print(f"vec2d ({self.x}, {self.y}, {self.z})")
+            print(f"vec3d ({self.x}, {self.y}, {self.z})")
     
 class BoundingBox():
     minX:float
@@ -184,9 +185,13 @@ class TransformMatrix():
         if debug:
             print(f"transform matrix {self.to_matrix()}")
 
-        print(self)
-
-    def to_matrix(self,):
+    def to_matrix(self, transpose = False):
+        if transpose:
+            return [[self.row0_col0, self.row1_col0, self.row2_col0, self.row3_col0],
+                    [self.row0_col1, self.row1_col1, self.row2_col1, self.row3_col1],
+                    [self.row0_col2, self.row1_col2, self.row2_col2, self.row3_col2],
+                    [self.row0_col3, self.row1_col3, self.row2_col3, self.row3_col3]]
+        
         return [[self.row0_col0, self.row0_col1, self.row0_col2, self.row0_col3],
                 [self.row1_col0, self.row1_col1, self.row1_col2, self.row1_col3],
                 [self.row2_col0, self.row2_col1, self.row2_col2, self.row2_col3],
@@ -464,12 +469,14 @@ class Polygon():
             self.dataVerts = []
             self.normal = Vec3d(None, None, None)
 
-        self.normal.from_to_file(io, operation)
+        self.normal.from_to_file(io = io, 
+                                    operation = operation, 
+                                    inverse=False)
         
         self.numVerts = io_int(io, self.numVerts, operation)
         
         if debug:
-            print(f"Reading {self.numVerts} verts  at {hex(io.tell())}/{hex(io.tell())}")
+            print(f"Reading {self.numVerts} verts at {hex(io.tell())}/{hex(io.tell())}")
         for i in range(self.numVerts):
             if operation == IOOperation.READ:
                 self.dataVerts.append(Vec3d(None, None, None))

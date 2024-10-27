@@ -8,6 +8,9 @@ debug = False
 
 endian = ""
 
+class UnknownData(Exception):
+    pass
+
 class IOOperation(Enum):
     READ=0
     WRITE=1
@@ -23,7 +26,7 @@ def io_short(io:IO, short_value:int, operation:IOOperation):
         return val
     else:
         if short_value is None:
-            raise ValueError("Requested to write a None integer.")
+            raise ValueError("Requested to write a None short integer.")
         io.write(struct.pack("h", short_value))
         return short_value
     
@@ -67,16 +70,17 @@ def io_str(io:IO, string_value:str, operation:IOOperation):
             byt = io_bytes(io, None, 1, operation)[0]
             if debug:
                 print(f"byt found {byt}")
-            if not byt in [b"\xFD",b"\xfb", b"\xFC"]:
+            if not byt in [b"\xFD",b"\xfb", b"\xFC", b"\x00"]:
                 string_value += byt.decode(encoding='cp437')
         if debug:
             print(f"Reading string \"{string_value}\"")
-        return string_value
+        return str(string_value)
     else:
         if string_value is None:
             raise ValueError("Requested to write a None string.")
-        io.write(string_value.encode())
-        return string_value
+        str_to_write = "".join([e+"\00" for e in string_value])
+        io.write(str_to_write.encode())
+        return str(string_value)
     
 def io_bytes(io:IO, bytes_value:Any, bytes_count:int, operation:IOOperation):
     if operation == IOOperation.READ:

@@ -1,11 +1,11 @@
 from typing import List, Tuple
-from cs2_parsed_io import Cs2File, Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone
-from mathutils import Matrix
+from src.cs2_parsed_io import Cs2File, Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone, UnicodeString
+
 import bpy
 
-from MeshEditor import MeshEditor
+from src.mesh_editor import MeshEditor
 
-from CollectionManager import CollectionManager
+from src.collection_manager import CollectionManager
 
 class Cs2ToBlender:
     def __init__(self, ):
@@ -46,79 +46,84 @@ class Cs2ToBlender:
         return vertex_list, edge_list, face_list
         
     def make_bounding_box(self, name:str, collection_name:str, bb:BoundingBox):
+        print(f"Making bounding box {name}")
         v, e, f = self.make_bounding_box_data(bb)
-        self.me.make_object_from_data(f"{name}_bounding_box", v, e, f)
-        self.cm.move_object_to_collection(f"{name}_bounding_box", collection_name)
+        ob = self.me.make_object_from_data(f"{name}_bounding_box", v, e, f)
+        self.cm.move_object_to_collection(ob, collection_name)
     
     def make_building_piece(self, name:str, collection_name:str, bp:BuildingPiece, transform_matrixes:List[TransformMatrix]):
-        self.cm.new_collection(bp.pieceName, collection_name)
+        print(f"Making building piece {bp.pieceName.value}")
+        self.cm.new_collection(bp.pieceName.value, collection_name)
         
+        if bp.placementNode.nodeName.value == "":
+            bp.placementNode.nodeName.value = collection_name+"_building_piece_placement"
         self.make_tech_node(collection_name, bp.placementNode, transform_matrixes)
         transform_matrix = bp.placementNode.NodeTransform
         
         for d in range(bp.destructCount):
-            self.make_destruct(name, bp.pieceName, bp.destructs[d], transform_matrixes + [transform_matrix])
+            self.make_destruct(name, bp.pieceName.value, bp.destructs[d], transform_matrixes + [transform_matrix])
 
     def make_destruct(self, name:str, collection_name:str, destruct:DestructLevel, transform_matrixes:List[TransformMatrix]):
-        self.cm.new_collection(destruct.destructName, collection_name)
+        print(f"Making destruct {destruct.destructName.value}")
+        self.cm.new_collection(destruct.destructName.value, collection_name)
         
-        self.make_collision3d(destruct.destructName, destruct.collision3dMesh, transform_matrixes)
+        self.make_collision3d(destruct.destructName.value, destruct.collision3dMesh, transform_matrixes)
         
         if destruct.numWindows > 0:
-            window_collection = destruct.destructName+"_windows"
-            self.cm.new_collection(window_collection, destruct.destructName)
+            window_collection = destruct.destructName.value+"_windows"
+            self.cm.new_collection(window_collection, destruct.destructName.value)
             
         if destruct.numDoors > 0:
-            door_collection = destruct.destructName+"_doors"
-            self.cm.new_collection(door_collection, destruct.destructName)
+            door_collection = destruct.destructName.value+"_doors"
+            self.cm.new_collection(door_collection, destruct.destructName.value)
             
         if destruct.numSpecial > 0:
-            special_collection = destruct.destructName+"_specials"
-            self.cm.new_collection(special_collection, destruct.destructName)
+            special_collection = destruct.destructName.value+"_specials"
+            self.cm.new_collection(special_collection, destruct.destructName.value)
             
         if destruct.numLines > 0:
-            line_collection = destruct.destructName+"_lines"
-            self.cm.new_collection(line_collection, destruct.destructName)
+            line_collection = destruct.destructName.value+"_lines"
+            self.cm.new_collection(line_collection, destruct.destructName.value)
             
         if destruct.numNogo > 0:
-            nogo_collection = destruct.destructName+"_nogos"
-            self.cm.new_collection(nogo_collection, destruct.destructName)
+            nogo_collection = destruct.destructName.value+"_nogos"
+            self.cm.new_collection(nogo_collection, destruct.destructName.value)
                     
         if destruct.numPipes > 0:
-            pipes_collection = destruct.destructName + "_pipes"
-            self.cm.new_collection(pipes_collection, destruct.destructName)
+            pipes_collection = destruct.destructName.value + "_pipes"
+            self.cm.new_collection(pipes_collection, destruct.destructName.value)
 
         if destruct.numCannons > 0:
-            cannons_collection = destruct.destructName + "_cannons"
-            self.cm.new_collection(cannons_collection, destruct.destructName)
+            cannons_collection = destruct.destructName.value + "_cannons"
+            self.cm.new_collection(cannons_collection, destruct.destructName.value)
 
         if destruct.numArrowEmitters > 0:
-            arrow_emitters_collection = destruct.destructName + "_arrow_emitters"
-            self.cm.new_collection(arrow_emitters_collection, destruct.destructName)
+            arrow_emitters_collection = destruct.destructName.value + "_arrow_emitters"
+            self.cm.new_collection(arrow_emitters_collection, destruct.destructName.value)
 
         if destruct.numDockingPoints > 0:
-            docking_points_collection = destruct.destructName + "_docking_points"
-            self.cm.new_collection(docking_points_collection, destruct.destructName)
+            docking_points_collection = destruct.destructName.value + "_docking_points"
+            self.cm.new_collection(docking_points_collection, destruct.destructName.value)
 
         if destruct.numSoftCollisions > 0:
-            soft_collisions_collection = destruct.destructName + "_soft_collisions"
-            self.cm.new_collection(soft_collisions_collection, destruct.destructName)
+            soft_collisions_collection = destruct.destructName.value + "_soft_collisions"
+            self.cm.new_collection(soft_collisions_collection, destruct.destructName.value)
 
         if destruct.numFileRefs > 0:
-            file_refs_collection = destruct.destructName + "_file_refs"
-            self.cm.new_collection(file_refs_collection, destruct.destructName)
+            file_refs_collection = destruct.destructName.value + "_file_refs"
+            self.cm.new_collection(file_refs_collection, destruct.destructName.value)
 
         if destruct.numEFLines > 0:
-            eflines_collection = destruct.destructName + "_eflines"
-            self.cm.new_collection(eflines_collection, destruct.destructName)
+            eflines_collection = destruct.destructName.value + "_eflines"
+            self.cm.new_collection(eflines_collection, destruct.destructName.value)
 
         if destruct.numActionVFX > 0:
-            actionVFX_collection = destruct.destructName + "_actionVFX"
-            self.cm.new_collection(actionVFX_collection, destruct.destructName)
+            actionVFX_collection = destruct.destructName.value + "_actionVFX"
+            self.cm.new_collection(actionVFX_collection, destruct.destructName.value)
 
         if destruct.numAttActionVFX > 0:
-            att_actionVFX_collection = destruct.destructName + "_att_actionVFX"
-            self.cm.new_collection(att_actionVFX_collection, destruct.destructName)
+            att_actionVFX_collection = destruct.destructName.value + "_att_actionVFX"
+            self.cm.new_collection(att_actionVFX_collection, destruct.destructName.value)
 
         for i in range(destruct.numWindows):
             self.make_collision3d(window_collection, destruct.collision3dWindows[i], transform_matrixes)
@@ -135,9 +140,9 @@ class Cs2ToBlender:
         for i in range(destruct.numNogo):
             nogo = destruct.dataNogo[i]
 
-            fake_line = LineNode(f"nogo_{i}", 
+            fake_line = LineNode(UnicodeString(len(f"nogo_{i}"), f"nogo_{i}"), 
                                     len(nogo.dataLines), 
-                                    [(nogo.dataLines[j][0], nogo.dataLines[j][1], 0.) for j in range(len(nogo.dataLines))]
+                                    [(nogo.dataLines[j].x, nogo.dataLines[j].y, 0.) for j in range(len(nogo.dataLines))]
                                     , 0)
             
             self.make_line(nogo_collection, fake_line, transform_matrixes, closed=True)
@@ -145,7 +150,7 @@ class Cs2ToBlender:
         for i in range(destruct.numPipes):
             self.make_line(pipes_collection, destruct.dataPipes[i], transform_matrixes, closed = False)
 
-        self.make_platform(destruct.destructName, destruct.platforms, transform_matrixes)
+        self.make_platform(destruct.destructName.value, destruct.platforms, transform_matrixes)
 
         for i in range(destruct.numCannons):
             self.make_tech_node(cannons_collection, destruct.dataCannons[i], transform_matrixes)
@@ -172,11 +177,14 @@ class Cs2ToBlender:
             self.make_vfx_attachment(att_actionVFX_collection, destruct.attActionVFX[i], transform_matrixes)
 
     def make_cs2(self, cs2:Cs2File, name:str):
-        self.cm.new_collection(f"cs2_parsed_{name}_collection")
+        print(f"Making cs2 {name}")
+        self.cm.new_collection(f"cs2_parsed_{name}_collection", "")
 
         collection_name = f"cs2_parsed_{name}_collection"
         self.make_bounding_box(name, collection_name, cs2.bbox)
 
+        if cs2.flag.nodeName.value == "":
+            cs2.flag.nodeName.value = collection_name+"_flag"
         self.make_tech_node(collection_name, cs2.flag, [])
         transform_matrix = cs2.flag.NodeTransform
         
@@ -184,57 +192,63 @@ class Cs2ToBlender:
             self.make_building_piece(name, collection_name, cs2.building_pieces[p], [transform_matrix])
 
     def make_tech_node(self, collection_name:str, t:TechNode, transform_matrixes:List[TransformMatrix]):
-        t.nodeName
-        t.NodeTransform
+        if t.nodeName.value == "":
+            t.nodeName.value = collection_name+"_tech_node"
+        print(f"Making tech node {t.nodeName.value}")
 
-        empty:bpy.types.Object = bpy.ops.object.empty_add(type='PLAIN_AXES', 
-                                            align='WORLD', 
-                                            location=(0, 0, 0), 
-                                            rotation=(0, 0, 0), 
-                                            scale=(1, 1, 1))
+        empty = self.me.make_empty(t.nodeName.value, t.NodeTransform.to_matrix(transpose=True))
 
-        empty.name = t.nodeName
-        empty.matrix_world = t.NodeTransform.to_matrix()
+        self.cm.move_object_to_collection(empty, collection_name)
+        
 
-        self.cm.move_object_to_collection(t.nodeName, transform_matrixes)
+    def make_platform(self, collection_name:str, p:Platform, transform_matrixes:List[TransformMatrix]):
+        print(f"Making platform for {collection_name}")
+        vert_count_platform = 0
+        vert_count_ground = 0
+
+        platform_verts: List = []
+        ground_verts: List = []
+
+        platform_faces: List = []
+        ground_faces: List = []
+
+        for pol in p.dataPolygons:
+            if pol.isPlatformGround:
+                ground_verts += pol.dataVerts
+                ground_faces += [vert_count_ground+i for i in range(len(pol.dataVerts))]
+
+                vert_count_ground = len(ground_verts) 
+
+            else:
+                platform_verts += pol.dataVerts
+                platform_faces += [vert_count_platform+i for i in range(len(pol.dataVerts))]
+
+                vert_count_platform = len(platform_verts) 
+
+        if len(platform_verts) > 0:
+            ob = self.me.make_object_from_data(collection_name+"_platform", platform_verts, [], platform_faces)
+            self.cm.move_object_to_collection(ob, collection_name)
+
+            self.apply_transform_matrixes(collection_name+"_platform", transform_matrixes)
+
+        if len(ground_verts) > 0:
+            ob = self.me.make_object_from_data(collection_name+"_ground", ground_verts, [], ground_faces)
+            self.cm.move_object_to_collection(ob, collection_name)
+
+            self.apply_transform_matrixes(collection_name+"_ground", transform_matrixes)
+            
+        # TODO: "revert normals?"
+
+    def make_file_ref(self, collection_name:str, fr:FileRef, transform_matrixes:List[TransformMatrix]):  
+        print(f"Making file reference {fr.fileKey.value}")
+        empty = self.me.make_empty(fr.fileKey.value, fr.fileTransform.to_matrix(transpose=True))
+        
+        self.cm.move_object_to_collection(empty, collection_name)
         
 
 
-    def make_platform(self, collection_name:str, p:Platform, transform_matrixes:List[TransformMatrix]):
-        verts = []
-
-        faces = []
-
-        vert_count = 0
-
-        for pol in p.dataPolygons:
-            verts += pol.dataVerts
-            faces += [vert_count+i for i in range(len(pol.dataVerts))]
-
-            vert_count = len(verts) 
-
-            # TODO: "revert normals?"
-
-            # TODO: separate ground from platform
-
-        self.me.make_object_from_data(collection_name+"_platform", verts, [], faces)
-        self.cm.move_object_to_collection(collection_name+"_platform", collection_name)
-
-        self.apply_transform_matrixes(collection_name+"_platform", transform_matrixes)
-
-    def make_file_ref(self, collection_name:str, fr:FileRef, transform_matrixes:List[TransformMatrix]):  
-
-        empty:bpy.types.Object = bpy.ops.object.empty_add(type='ARROWS', 
-                                            align='WORLD', 
-                                            location=(2, 2, 0), 
-                                            rotation=(0.872665, 0.872665, 0), 
-                                            scale=(1, 1, 1))
-
-        empty.name = fr.fileKey
-        empty.matrix_world = fr.fileTransform
-
-
     def make_soft_collision(self, collection_name:str, sc:SoftCollision, transform_matrixes:List[TransformMatrix]):
+        print(f"Making soft collision {sc.nodeName.value}")
         
         cyl:bpy.types.Object = bpy.ops.mesh.primitive_cylinder_add(radius=sc.cylinderRadius, 
                                                     depth=sc.cylinderHeight, 
@@ -244,36 +258,40 @@ class Cs2ToBlender:
                                                     rotation=(0, 0, 0), 
                                                     scale=(1, 1, 1))
         
-        cyl.name = sc.nodeName
-        cyl.matrix_world = sc.nodeTransform
+        self.cm.rename_object(cyl, sc.nodeName.value)
+        cyl.matrix_world = sc.nodeTransform.to_matrix(transpose=True)
 
-        self.cm.move_object_to_collection(collection_name, collection_name)
+        self.cm.move_object_to_collection(cyl.name, collection_name)
 
         self.apply_transform_matrixes(collection_name, transform_matrixes)
 
     def make_efline(self, collection_name:str, ef:EFLine, transform_matrixes:List[TransformMatrix]):
-        self.me.make_object_from_data(ef.lineName, [ef.lineStart, ef.lineEnd], [(0, 1)], [])
-        self.cm.move_object_to_collection(ef.lineName, collection_name)
+        print(f"Making efline {ef.lineName.value}")
+        ob = self.me.make_object_from_data(ef.lineName.value, [ef.lineStart, ef.lineEnd], [(0, 1)], [])
+        self.cm.move_object_to_collection(ob, collection_name)
 
-        self.apply_transform_matrixes(ef.lineName, transform_matrixes)
+        self.apply_transform_matrixes(ef.lineName.value, transform_matrixes)
 
     def make_collision3d(self, collection_name:str, c3d:Collision3D, transform_matrixes:List[TransformMatrix]):
+        print(f"Making collision 3d {c3d.collisionName.value}")
         
-        self.me.make_object_from_data(c3d.collisionName, c3d.dataVerts, [], c3d.dataFaces)
-        self.cm.move_object_to_collection(c3d.collisionName, collection_name)
+        ob = self.me.make_object_from_data(c3d.collisionName.value, c3d.dataVerts, [], c3d.dataFaces)
+        self.cm.move_object_to_collection(ob, collection_name)
 
-        self.apply_transform_matrixes(c3d.collisionName, transform_matrixes)
+        self.apply_transform_matrixes(c3d.collisionName.value, transform_matrixes)
 
     def make_line(self, collection_name:str, ln:LineNode, transform_matrixes:List[TransformMatrix], closed = False):
+        print(f"Making line {ln.lineName.value}")
         
         edges = [(i, i+1) for i in range(len(ln.dataVerts) - 1)]
         if closed:
-            edges.append(len(ln.dataVerts)-1, 0)
+            edges.append((len(ln.dataVerts)-1, 0))
 
-        self.me.make_object_from_data(ln.lineName, ln.dataVerts, edges, [])
-        self.cm.move_object_to_collection(ln.lineName, collection_name)
+        ob = self.me.make_object_from_data(ln.lineName.value, ln.dataVerts, edges, [])
+        self.cm.move_object_to_collection(ob, collection_name)
 
-        self.apply_transform_matrixes(ln.lineName, transform_matrixes)
+        self.apply_transform_matrixes(ln.lineName.value, transform_matrixes)
 
-    def make_vfx_attachment(self, collection_name:str, ln:VFXAttachment, transform_matrixes:List[TransformMatrix]):
-        raise NotImplementedError("Build a blender version of VFXAttachment was not implemented.")
+    def make_vfx_attachment(self, collection_name:str, vfxA:VFXAttachment, transform_matrixes:List[TransformMatrix]):
+        print(vfxA, vfxA.dataIndices)
+        # raise NotImplementedError("Build a blender version of VFXAttachment was not implemented.")
