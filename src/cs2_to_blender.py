@@ -1,8 +1,6 @@
 from typing import List, Tuple
 from src.cs2_parsed_io import Cs2File, Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone, UnicodeString
 
-import bpy
-
 from src.mesh_editor import MeshEditor
 
 from src.collection_manager import CollectionManager
@@ -238,27 +236,10 @@ class Cs2ToBlender:
         
         self.cm.move_object_to_collection(empty, collection_name)
         
-
-
     def make_soft_collision(self, collection_name:str, sc:SoftCollision, transform_matrixes:List[TransformMatrix]):
         print(f"Making soft collision {sc.nodeName.value}")
         
-        bpy.ops.mesh.primitive_cylinder_add(radius=sc.cylinderRadius, 
-                                                    depth=sc.cylinderHeight, 
-                                                    enter_editmode=False, 
-                                                    align='WORLD', 
-                                                    location=(0, 0, sc.cylinderHeight), 
-                                                    rotation=(0, 0, 0), 
-                                                    scale=(sc.cylinderRadius, sc.cylinderRadius, sc.cylinderHeight))
-        
-        cyl:bpy.types.Object = bpy.context.view_layer.objects.active
-        self.cm.rename_object(cyl, sc.nodeName.value)
-        self.me.apply_transform_matrix(cyl.name, sc.nodeTransform)
-        
-        bpy.data.objects[cyl.name].location.z += sc.cylinderHeight
-
-        self.cm.move_object_to_collection(cyl.name, collection_name)
-
+        self.me.make_cylinder(sc.cylinderRadius, sc.cylinderHeight, sc.nodeName.value, collection_name, sc.nodeTransform)
         # self.me.apply_transform_matrixes(collection_name, transform_matrixes)
 
     def make_efline(self, collection_name:str, ef:EFLine, transform_matrixes:List[TransformMatrix]):

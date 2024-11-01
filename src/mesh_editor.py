@@ -1,6 +1,7 @@
 from typing import List, Tuple
 import bpy
 import bmesh
+import mathutils
 
 from src.collection_manager import CollectionManager
 from src.cs2_parsed_io import Vec3d, Face, TransformMatrix
@@ -35,6 +36,23 @@ class MeshEditor:
 
         obj.matrix_world = mat
 
+    def read_transform_matrix(self, object_name:str):
+        obj:bpy.types.Object = bpy.data.objects[object_name]
+
+        mat:mathutils.Matrix = obj.matrix_world
+
+        mat.transpose()
+
+        col_save = mat[1]
+        mat[1] = mat[2]
+        mat[2] = col_save
+
+        for i in range(4):
+            e_save = mat[i][1]
+            mat[i][1] = mat[i][2]
+            mat[i][2] = e_save
+
+        return TransformMatrix(**mat)
     """
         Goes to edit mode, if an object is selected and not already in edit mode, its data are stored, and the bmesh is created.
     """
@@ -89,13 +107,18 @@ class MeshEditor:
 
         return ob
         
-    def make_py_data(self, object_name:str):
+    def make_py_data(self, object_name:str,
+                              swap_yz = True):
         obj_data = bpy.data.objects[object_name].data
 
         vertex_list = []
         for v in obj_data.vertices:
             vertex_list.append((v.co[0], v.co[1], v.co[2]))
             
+        if swap_yz:
+            for i in range(len(vertex_list)):
+                vertex_list[i] = [vertex_list[i][0], vertex_list[i][2], vertex_list[i][1]]
+
         edge_list = []
         for e in obj_data.edges:
             edge_list.append((e.vertices[0], e.vertices[1]))
@@ -148,3 +171,20 @@ class MeshEditor:
         self.apply_transform_matrix(empty_name, matrix)
 
         return empty
+
+    def make_cylinder(self, radius:float, height:float, name:str, collection_name:str, node_transorm:TransformMatrix):
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, 
+                                                    depth=height, 
+                                                    enter_editmode=False, 
+                                                    align='WORLD', 
+                                                    location=(0, 0, height), 
+                                                    rotation=(0, 0, 0), 
+                                                    scale=(1., 1., 1.))
+        
+        cyl:bpy.types.Object = bpy.context.view_layer.objects.active
+        self.cm.rename_object(cyl, name)
+        self.apply_transform_matrix(cyl.name, node_transorm)
+        
+        bpy.data.objects[cyl.name].location.z += height/2
+
+        self.cm.move_object_to_collection(cyl.name, collection_name)

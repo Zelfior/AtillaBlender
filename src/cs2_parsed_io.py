@@ -250,6 +250,8 @@ class FaceEdge():
 
         if debug:
             print(f"faceedge : {self.vertexIndex0}, {self.vertexIndex1}, {self.edgeIndex}, {self.unknown}")
+    def __repr__(self):
+        return f"FaceEdge : {self.vertexIndex0}, {self.vertexIndex1}, {self.edgeIndex}, {self.unknown}"
 
 class FaceEdgeData():
     edge0:FaceEdge
@@ -277,17 +279,19 @@ class FaceEdgeData():
         self.edge1.from_to_file(io, operation)
         self.edge2.from_to_file(io, operation)
         self.edge3.from_to_file(io, operation)
+    def __repr__(self):
+        return f"FaceEdgeData :\n     {self.edge0},\n     {self.edge1},\n     {self.edge2},\n     {self.edge3}"
 
 class Face():
     faceIndex:int
-    vertIndex0:Any
+    vertIndex0:int
     vertIndex1:int
     vertIndex2:int
     edgeData:FaceEdgeData
 
     def __init__(self, 
                     faceIndex:int,
-                    vertIndex0:Any,
+                    vertIndex0:int,
                     vertIndex1:int,
                     vertIndex2:int,
                     edgeData:FaceEdgeData):
@@ -315,6 +319,8 @@ class Face():
         self.vertIndex1 = io_int(io, self.vertIndex1, operation)
         self.vertIndex2 = io_int(io, self.vertIndex2, operation)
         self.edgeData.from_to_file(io, operation)
+
+        # print(f"Face:\n     {self.faceIndex}\n     {self.padding.value}\n     {self.vertIndex0}\n     {self.vertIndex1}\n     {self.vertIndex2} \n{self.edgeData}")
 
 
 class Collision3D():
@@ -573,6 +579,10 @@ class SoftCollision():
 
         self.cylinderRadius = io_float(io, self.cylinderRadius, operation)
         self.cylinderHeight = io_float(io, self.cylinderHeight, operation)    
+
+        print(self)
+    def __repr__(self):
+        return f"SoftCollision {self.nodeName.value} : \n    r {self.cylinderRadius}\n    h {self.cylinderHeight}\n    matrix \n{self.nodeTransform}"
 
 class FileRef():
     fileKey:UnicodeString
@@ -1107,8 +1117,8 @@ class Cs2File:
 if __name__ == "__main__":
     input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\30_30_10\\30_30_10_tech.cs2.parsed")
     input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\arena\\arena_tech.cs2.parsed")
-    input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\athens_acropolis\\athens_acropolis_tech.cs2.parsed")
     input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\attila_cliff_01\\attila_cliff_01_tech.cs2.parsed")
+    input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\athens_acropolis\\athens_acropolis_tech.cs2.parsed")
     cs2 = Cs2File.new_cs2file()
 
     has_ = True
