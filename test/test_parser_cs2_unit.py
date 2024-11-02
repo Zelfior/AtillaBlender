@@ -44,6 +44,9 @@ def compare_binaries(input_path_reference, file_name):
             print("Both files are identical")
             assert True
 
+
+
+
 def test_read_vec2d(file_path = package_path/"files/unit_test_cs2_parsed/vec2d.cs2.parsed"):
     
     v = Vec2d.new_vec2d()
@@ -62,6 +65,10 @@ def test_write_vec2d():
         v.from_to_file(f, IOOperation.WRITE)
 
     test_read_vec2d(file_path=file_path)
+
+
+
+
 
 
 def test_read_vec3d(file_path = package_path/"files/unit_test_cs2_parsed/vec2d.cs2.parsed"):
@@ -85,6 +92,10 @@ def test_write_vec3d():
     test_read_vec3d(file_path=file_path)
 
 
+
+
+
+
 def test_read_unicode_string(file_path = package_path/"files/unit_test_cs2_parsed/unicode_string.cs2.parsed"):
     us = UnicodeString.new_unicodestring()
     with open(file_path, "rb") as f:
@@ -100,6 +111,9 @@ def test_write_unicode_string():
         us.from_to_file(f, IOOperation.WRITE)
 
     test_read_unicode_string(file_path=file_path)
+
+
+
 
 
 
@@ -125,6 +139,82 @@ def test_write_nogo():
         us.from_to_file(f, IOOperation.WRITE)
 
     test_read_nogo(file_path=file_path)
+
+
+
+
+
+def test_read_vfx_attachment(file_path = package_path/"files/unit_test_cs2_parsed/vfx_attachment.cs2.parsed"):
+    
+    va = VFXAttachment.new_vfx_attachment()
+    with open(file_path, "rb") as f:
+        va.from_to_file(f, IOOperation.READ)
+
+        assert va.dataIndices == [0, 0, 5]
+        assert va.numIndices == 3
+
+def test_write_vfx_attachment():
+    file_path = package_path/"garbage/vfx_attachment.cs2.parsed"
+
+    va = VFXAttachment(3, [0, 0, 5])
+
+    with open(file_path, "wb") as f:
+        va.from_to_file(f, IOOperation.WRITE)
+
+    test_read_vfx_attachment(file_path=file_path)
+
+
+
+
+
+
+def test_read_file_ref(file_path = package_path/"files/unit_test_cs2_parsed/file_ref.cs2.parsed"):
+    
+    fr = FileRef.new_file_ref()
+    with open(file_path, "rb") as f:
+        fr.from_to_file(f, IOOperation.READ)
+
+        assert fr.fileKey.value == "hello world"
+        assert fr.fileName.value == "hello world2"
+        assert fr.fileTransform.to_matrix(transpose=True) == [[int(j) for j in range(4*i, 4*(i+1))] for i in range(4)]
+        assert fr.some_short == 1
+
+
+def test_write_file_ref():
+    file_path = package_path/"garbage/file_ref.cs2.parsed"
+
+    fr = FileRef(UnicodeString(11, "hello world"), UnicodeString(12, "hello world2"), TransformMatrix(*list(range(16))), 1)
+
+    with open(file_path, "wb") as f:
+        fr.from_to_file(f, IOOperation.WRITE)
+
+    test_read_file_ref(file_path=file_path)
+
+
+
+
+
+
+
+def test_read_transform_matrix(file_path = package_path/"files/unit_test_cs2_parsed/transform_matrix.cs2.parsed"):
+    
+    tm = TransformMatrix.new_transform_matrix()
+    with open(file_path, "rb") as f:
+        tm.from_to_file(f, IOOperation.READ)
+
+        assert tm.to_matrix(transpose=True) == [[int(j) for j in range(4*i, 4*(i+1))] for i in range(4)]
+
+
+def test_write_transform_matrix():
+    file_path = package_path/"garbage/transform_matrix.cs2.parsed"
+
+    tm = TransformMatrix(*list(range(16)))
+
+    with open(file_path, "wb") as f:
+        tm.from_to_file(f, IOOperation.WRITE)
+
+    test_read_transform_matrix(file_path=file_path)
+
 
 
 if __name__ == "__main__":
