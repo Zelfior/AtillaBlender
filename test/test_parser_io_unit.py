@@ -44,27 +44,7 @@ def compare_binaries(input_path_reference, file_name):
             assert True
 
 
-def test_read_UnicodeString():
-    file_path = package_path/"files/unit_test_cs2_parsed/float_12.cs2.parsed"
-    
-    with open(file_path, "rb") as f:
-        val = io_float(f, 0., IOOperation.READ)
-        assert val == 12.5
-
-def test_write_UnicodeString():
-    file_path = package_path/"garbage/float_12.cs2.parsed"
-
-    with open(file_path, "wb") as f:
-        val = io_float(f, 12.5, IOOperation.WRITE)
-
-    with open(file_path, "rb") as f:
-        val = io_float(f, 0., IOOperation.READ)
-        assert val == 12.5
-
-
-def test_read_float():
-    file_path = package_path/"files/unit_test_cs2_parsed/float_12.cs2.parsed"
-    
+def test_read_float(file_path = package_path/"files/unit_test_cs2_parsed/float_12.cs2.parsed"): 
     with open(file_path, "rb") as f:
         val = io_float(f, 0., IOOperation.READ)
         assert val == 12.5
@@ -75,14 +55,10 @@ def test_write_float():
     with open(file_path, "wb") as f:
         val = io_float(f, 12.5, IOOperation.WRITE)
 
-    with open(file_path, "rb") as f:
-        val = io_float(f, 0., IOOperation.READ)
-        assert val == 12.5
+    test_read_float(file_path = file_path)
 
 
-def test_read_int():
-    file_path = package_path/"files/unit_test_cs2_parsed/int_12.cs2.parsed"
-    
+def test_read_int(file_path = package_path/"files/unit_test_cs2_parsed/int_12.cs2.parsed"):
     with open(file_path, "rb") as f:
         val = io_int(f, 0., IOOperation.READ)
         assert val == 12
@@ -93,14 +69,10 @@ def test_write_int():
     with open(file_path, "wb") as f:
         val = io_int(f, 12, IOOperation.WRITE)
 
-    with open(file_path, "rb") as f:
-        val = io_int(f, 0., IOOperation.READ)
-        assert val == 12
+    test_read_int(file_path = file_path)
 
 
-def test_read_short():
-    file_path = package_path/"files/unit_test_cs2_parsed/short_12.cs2.parsed"
-    
+def test_read_short(file_path = package_path/"files/unit_test_cs2_parsed/short_12.cs2.parsed"):
     with open(file_path, "rb") as f:
         val = io_short(f, 0., IOOperation.READ)
         assert val == 12
@@ -111,14 +83,10 @@ def test_write_short():
     with open(file_path, "wb") as f:
         val = io_short(f, 12, IOOperation.WRITE)
 
-    with open(file_path, "rb") as f:
-        val = io_short(f, 0., IOOperation.READ)
-        assert val == 12
+    test_read_short(file_path = file_path)
 
 
-def test_read_bytes():
-    file_path = package_path/"files/unit_test_cs2_parsed/bytes_12.cs2.parsed"
-    
+def test_read_bytes(file_path = package_path/"files/unit_test_cs2_parsed/bytes_12.cs2.parsed"):
     with open(file_path, "rb") as f:
         val, count = io_bytes(f, b"", 4, IOOperation.READ)
         assert count == 4
@@ -130,15 +98,10 @@ def test_write_bytes():
     with open(file_path, "wb") as f:
         val, count = io_bytes(f, b"\x00\x01\x12\x20", 4, IOOperation.WRITE)
 
-    with open(file_path, "rb") as f:
-        val, count = io_bytes(f, b"", 4, IOOperation.READ)
-        assert count == 4
-        assert val == b"\x00\x01\x12\x20"
+    test_read_bytes(file_path = file_path)
 
 
-def test_read_str():
-    file_path = package_path/"files/unit_test_cs2_parsed/str_12.cs2.parsed"
-    
+def test_read_str(file_path = package_path/"files/unit_test_cs2_parsed/str_12.cs2.parsed"):
     with open(file_path, "rb") as f:
         val = io_str(f, "o"*11, IOOperation.READ)
         assert val == "hello world"
@@ -149,9 +112,7 @@ def test_write_str():
     with open(file_path, "wb") as f:
         val = io_str(f, "hello world", IOOperation.WRITE)
 
-    with open(file_path, "rb") as f:
-        val = io_str(f, "o"*11, IOOperation.READ)
-        assert val == "hello world"
+    test_read_str(file_path = file_path)
 
 
 
