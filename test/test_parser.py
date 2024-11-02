@@ -10,6 +10,12 @@ package_path = Path(__file__).absolute().parent.parent
 from src.cs2_parsed_io import Cs2File
 from src.io_elementary import IOOperation
 
+os.makedirs("garbage", exist_ok=True)
+
+files = glob.glob('garbage/*')
+for f in files:
+    if os.path.isfile(f):
+        os.remove(f)
 
 def run_test(file_path):
 
@@ -21,8 +27,6 @@ def run_test(file_path):
     input_path = Path(file_path)
 
     file_name = "garbage/"+input_path.name
-
-    os.makedirs("garbage", exist_ok=True)
 
     cs2 = Cs2File.new_cs2file()
 
