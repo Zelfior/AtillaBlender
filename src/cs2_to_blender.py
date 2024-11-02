@@ -1,9 +1,14 @@
 from typing import List, Tuple
 from src.cs2_parsed_io import Cs2File, Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone, UnicodeString
 
-from src.mesh_editor import MeshEditor
+try:
+    from src.mesh_editor import MeshEditor
+    from src.collection_manager import CollectionManager
+except (ImportError, AttributeError):
+    from src.fake_bpy import FakeMeshEditor as MeshEditor
+    from src.fake_bpy import FakeCollectionManager as CollectionManager
 
-from src.collection_manager import CollectionManager
+
 
 class Cs2ToBlender:
     def __init__(self, ):
@@ -48,7 +53,8 @@ class Cs2ToBlender:
         
         if bp.placementNode.nodeName.value == "":
             bp.placementNode.nodeName.value = collection_name+"_building_piece_placement"
-        self.make_tech_node(collection_name, bp.placementNode, transform_matrixes)
+
+        self.make_tech_node(bp.pieceName.value, bp.placementNode, transform_matrixes)
         transform_matrix = bp.placementNode.NodeTransform
         
         for d in range(bp.destructCount):
@@ -169,9 +175,9 @@ class Cs2ToBlender:
 
     def make_cs2(self, cs2:Cs2File, name:str):
         print(f"Making cs2 {name}")
-        self.cm.new_collection(f"cs2_parsed_{name}_collection", "")
-
         collection_name = f"cs2_parsed_{name}_collection"
+        self.cm.new_collection(collection_name, "")
+
         self.make_bounding_box(name, collection_name, cs2.bbox)
 
         if cs2.flag.nodeName.value == "":
@@ -270,5 +276,6 @@ class Cs2ToBlender:
         # self.apply_transform_matrixes(ln.lineName.value, transform_matrixes)
 
     def make_vfx_attachment(self, collection_name:str, vfxA:VFXAttachment, transform_matrixes:List[TransformMatrix]):
-        print(vfxA, vfxA.dataIndices)
+        pass
+        # print(vfxA, vfxA.dataIndices)
         # raise NotImplementedError("Build a blender version of VFXAttachment was not implemented.")

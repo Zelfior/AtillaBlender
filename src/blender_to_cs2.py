@@ -1,29 +1,38 @@
 from typing import List, Tuple
 from src.cs2_parsed_io import Cs2File, Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone, UnicodeString, Vec2d, Vec3d, Face, FaceEdgeData, FaceEdge
 
-import bpy
+try:
+    from src.mesh_editor import MeshEditor
+    from src.collection_manager import CollectionManager
+except (ImportError, AttributeError):
+    from src.fake_bpy import FakeMeshEditor as MeshEditor
+    from src.fake_bpy import FakeCollectionManager as CollectionManager
 
-from src.mesh_editor import MeshEditor
 
-from src.collection_manager import CollectionManager
-
-class Cs2ToBlender:
-    def __init__(self, ):
-        self.cm = CollectionManager()
-        self.me = MeshEditor()
+class BlenderToCs2:
+    def __init__(self, cm = None, me = None):
+        if cm is None:
+            self.cm = CollectionManager()
+        else:
+            self.cm = cm
+            
+        if me is None:
+            self.me = MeshEditor()
+        else:
+            self.me = me
 
     def make_transform_from_matrix_world(self, name:str) -> TransformMatrix:
-        return TransformMatrix(**[e for col in bpy.data.objects[name].matrix_world for e in col])
+        return self.me.read_transform_matrix(name)
         
     def read_bounding_box(self, name:str):
         print(f"Reading bounding box {name}")
         vertices, _, _ = self.me.make_py_data(name)
 
         min_x = min([v[0] for v in vertices])
-        min_y = min([v[0] for v in vertices])
-        min_z = min([v[1] for v in vertices])
-        max_x = max([v[1] for v in vertices])
-        max_y = max([v[2] for v in vertices])
+        min_y = min([v[1] for v in vertices])
+        min_z = min([v[2] for v in vertices])
+        max_x = max([v[0] for v in vertices])
+        max_y = max([v[1] for v in vertices])
         max_z = max([v[2] for v in vertices])
 
         return BoundingBox(min_x, min_y, min_z, max_x, max_y, max_z)
@@ -153,20 +162,43 @@ class Cs2ToBlender:
     #     for i in range(destruct.numAttActionVFX):
     #         self.make_vfx_attachment(att_actionVFX_collection, destruct.attActionVFX[i], transform_matrixes)
 
-    # def make_cs2(self, cs2:Cs2File, name:str):
-    #     print(f"Making cs2 {name}")
-    #     self.cm.new_collection(f"cs2_parsed_{name}_collection", "")
+    def make_cs2(self, version = 11):
+        collection_name = self.cm.get_selected_collection()
 
-    #     collection_name = f"cs2_parsed_{name}_collection"
-    #     self.make_bounding_box(name, collection_name, cs2.bbox)
+        print(f"Making cs2 from collection {collection_name}")
 
-    #     if cs2.flag.nodeName.value == "":
-    #         cs2.flag.nodeName.value = collection_name+"_flag"
-    #     self.make_tech_node(collection_name, cs2.flag, [])
-    #     transform_matrix = cs2.flag.NodeTransform
+        objects = self.cm.get_collection_object_list(collection_name)
+        print(collection_name, objects)
+
+        found_bounding_box = False
+        for obj in objects:
+            if obj.endswith("bounding_box"):
+                found_bounding_box = True
+                bb_name = obj
+        if not found_bounding_box:
+            raise Exception(f"No bounding box found in collection {collection_name}")
         
-    #     for p in range(cs2.piece_count):
-    #         self.make_building_piece(name, collection_name, cs2.building_pieces[p], [transform_matrix])
+        bb = self.read_bounding_box(bb_name)
+        print(bb)
+
+        found_flag = False
+        for obj in objects:
+            if obj.endswith("flag"):
+                found_flag = True
+                flag_name = obj
+        if not found_flag:
+            raise Exception(f"No bounding box found in collection {collection_name}")
+
+        flag = self.read_tech_node(flag_name)
+        if flag_name == f"{collection_name}_flag":
+            flag.nodeName.value = ""
+            flag.nodeName.length = 0
+        
+        
+        
+        return Cs2File(13, bb, flag, 0, [])
+        # for p in range(cs2.piece_count):
+        #     self.make_building_piece(name, collection_name, cs2.building_pieces[p], [transform_matrix])
 
     def read_tech_node(self, name:str) -> TechNode:
         return TechNode(UnicodeString(len(name), name), self.make_transform_from_matrix_world(name))

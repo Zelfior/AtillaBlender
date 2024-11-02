@@ -5,18 +5,15 @@ class CollectionManager:
     def __init__(self):
         pass
         
+    def get_selected_collection(self):
+        return bpy.context.collection.name
+
     def rename_object(self, o:bpy.types.Object | bpy.types.Collection, name:str):
         """
             Please do not ask why this heresy for it is the work of Melkor
         """
         print(f"Renaming {o} to {name} of length {len(name)}")
-        o.name = name#[0]
-
-        # for i in range(1, len(name)):
-        #     o.name += name[i]
-        
-        print(bpy.data.objects.keys())
-        print(bpy.data.collections.keys())
+        o.name = name
         
     def move_object_to_collection(self, object_name, collection_name):
         if isinstance(object_name, bpy.types.Object):

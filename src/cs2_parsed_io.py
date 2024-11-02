@@ -5,7 +5,7 @@ from typing import IO, Any, List
 
 from src.io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
 
-debug = False
+debug = True
 
 class SomeBytes():
     length:int
