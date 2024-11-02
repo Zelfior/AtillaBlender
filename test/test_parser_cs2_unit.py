@@ -4,7 +4,7 @@ from pathlib import Path
 
 package_path = Path(__file__).absolute().parent.parent
 
-from src.cs2_parsed_io import Cs2File, Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone, UnicodeString, Vec2d, Vec3d
+from src.cs2_parsed_io import Platform, EFLine, BoundingBox, TechNode, BuildingPiece, TransformMatrix, Collision3D, DestructLevel, LineNode, SoftCollision, FileRef, VFXAttachment, NogoZone, UnicodeString, Vec2d, Vec3d, Polygon, FaceEdgeData, FaceEdge
 
 from src.io_elementary import IOOperation
 
@@ -215,6 +215,263 @@ def test_write_transform_matrix():
 
     test_read_transform_matrix(file_path=file_path)
 
+
+
+
+
+
+
+
+def test_read_soft_collision(file_path = package_path/"files/unit_test_cs2_parsed/soft_collision.cs2.parsed"):
+    
+    sc = SoftCollision.new_soft_collision()
+    with open(file_path, "rb") as f:
+        sc.from_to_file(f, IOOperation.READ)
+
+        assert sc.nodeName.value == "hello world"
+        assert sc.cylinderRadius == 12.
+        assert sc.cylinderHeight == 42.
+        assert sc.nodeTransform.to_matrix(transpose=True) == [[int(j) for j in range(4*i, 4*(i+1))] for i in range(4)]
+
+
+def test_write_soft_collision():
+    file_path = package_path/"garbage/soft_collision.cs2.parsed"
+
+    sc = SoftCollision(UnicodeString(11, "hello world"), TransformMatrix(*list(range(16))), 1, 12., 42.)
+
+    with open(file_path, "wb") as f:
+        sc.from_to_file(f, IOOperation.WRITE)
+
+    test_read_soft_collision(file_path=file_path)
+
+
+
+
+
+
+
+
+def test_read_line_node(file_path = package_path/"files/unit_test_cs2_parsed/line_node.cs2.parsed"):
+    
+    ln = LineNode.new_line_node()
+    with open(file_path, "rb") as f:
+        ln.from_to_file(f, IOOperation.READ)
+
+        assert ln.lineName.value == "hello world"
+        assert ln.lineType == 13
+        assert ln.numVerts == 12
+
+        for i in range(12):
+            assert ln.dataVerts[i].x == i
+            assert ln.dataVerts[i].y == i+1
+            assert ln.dataVerts[i].z == i+2
+
+
+def test_write_line_node():
+    file_path = package_path/"garbage/line_node.cs2.parsed"
+
+    ln = LineNode(UnicodeString(11, "hello world"), 12, [Vec3d(i, i+1, i+2) for i in range(12)], 13)
+
+    with open(file_path, "wb") as f:
+        ln.from_to_file(f, IOOperation.WRITE)
+
+    test_read_line_node(file_path=file_path)
+
+
+
+
+
+
+def test_read_tech_node(file_path = package_path/"files/unit_test_cs2_parsed/tech_node.cs2.parsed"):
+    
+    tn = TechNode.new_tech_node()
+    with open(file_path, "rb") as f:
+        tn.from_to_file(f, IOOperation.READ)
+
+        assert tn.nodeName.value == "hello world"
+        assert tn.NodeTransform.to_matrix(transpose=True) == [[int(j) for j in range(4*i, 4*(i+1))] for i in range(4)]
+
+
+def test_write_tech_node():
+    file_path = package_path/"garbage/tech_node.cs2.parsed"
+
+    tn = TechNode(UnicodeString(11, "hello world"), TransformMatrix(*list(range(16))))
+
+    with open(file_path, "wb") as f:
+        tn.from_to_file(f, IOOperation.WRITE)
+
+    test_read_tech_node(file_path=file_path)
+
+
+
+
+
+
+
+def test_read_bounding_box(file_path = package_path/"files/unit_test_cs2_parsed/bounding_box.cs2.parsed"):
+    
+    bb = BoundingBox.new_bounding_box()
+    with open(file_path, "rb") as f:
+        bb.from_to_file(f, IOOperation.READ)
+
+        assert bb.minX == 0.
+        assert bb.minY == 1.
+        assert bb.minZ == 0.
+        assert bb.maxX == 20.
+        assert bb.maxY == 12.
+        assert bb.maxZ == 43.
+
+
+def test_write_bounding_box():
+    file_path = package_path/"garbage/bounding_box.cs2.parsed"
+
+    bb = BoundingBox(0., 1., 0., 20, 12, 43)
+
+    with open(file_path, "wb") as f:
+        bb.from_to_file(f, IOOperation.WRITE)
+
+    test_read_bounding_box(file_path=file_path)
+
+
+
+
+
+
+
+def test_read_ef_line(file_path = package_path/"files/unit_test_cs2_parsed/ef_line.cs2.parsed"):
+    
+    ef = EFLine.new_ef_line()
+    with open(file_path, "rb") as f:
+        ef.from_to_file(f, IOOperation.READ)
+
+        assert ef.lineName.value == "hello world"
+        assert ef.parentIndex == 13
+        assert ef.lineAction == 12
+        
+        assert ef.lineStart.x == 0.
+        assert ef.lineStart.y == 1.
+        assert ef.lineStart.z == 0.
+        
+        assert ef.lineEnd.x == 5.
+        assert ef.lineEnd.y == 1.
+        assert ef.lineEnd.z == 3.
+        
+        assert ef.lineDir.x == 2.
+        assert ef.lineDir.y == 2.
+        assert ef.lineDir.z == 0.
+
+
+def test_write_ef_line():
+    file_path = package_path/"garbage/ef_line.cs2.parsed"
+
+    ef = EFLine(UnicodeString(11, "hello world"), 12, Vec3d(0., 1., 0.), Vec3d(5., 1., 3.), Vec3d(2., 2., 0.), 13)
+
+    with open(file_path, "wb") as f:
+        ef.from_to_file(f, IOOperation.WRITE)
+
+    test_read_ef_line(file_path=file_path)
+
+
+
+
+
+def test_read_platform(file_path = package_path/"files/unit_test_cs2_parsed/platform.cs2.parsed"):
+    
+    pl = Platform.new_platform()
+    with open(file_path, "rb") as f:
+        pl.from_to_file(f, IOOperation.READ)
+
+        assert pl.numPolygons == 2
+        assert pl.some_int == 12
+        for p in pl.dataPolygons:
+            assert p.numVerts == 3
+            assert p.normal.x == 1
+            assert p.normal.y == 0
+            assert p.normal.z == 2
+            
+            for v in p.dataVerts:
+                assert v.x == 1
+                assert v.y == 23
+                assert v.z == 12
+
+            assert p.isPlatformGround == True
+
+def test_write_platform():
+    file_path = package_path/"garbage/platform.cs2.parsed"
+
+    pl = Platform(2, [Polygon(Vec3d(1, 0, 2), 3, [Vec3d(1, 23, 12)]*3, True)]*2, 12)
+
+    with open(file_path, "wb") as f:
+        pl.from_to_file(f, IOOperation.WRITE)
+
+    test_read_platform(file_path=file_path)
+
+
+
+
+
+
+
+
+
+
+def test_read_face_edge_data(file_path = package_path/"files/unit_test_cs2_parsed/face_edge_data.cs2.parsed"):
+    
+    fed = FaceEdgeData.new_face_edge_data()
+    with open(file_path, "rb") as f:
+        fed.from_to_file(f, IOOperation.READ)
+
+        edges = [fed.edge0, fed.edge1, fed.edge2, fed.edge3]
+        for i in range(4):
+            assert edges[i].vertexIndex0 == i
+            assert edges[i].vertexIndex1 == i+1
+            assert edges[i].edgeIndex == i+2
+            assert edges[i].unknown == i+3
+
+
+def test_write_face_edge_data():
+    file_path = package_path/"garbage/face_edge_data.cs2.parsed"
+
+    fed = FaceEdgeData(*[FaceEdge(i, i+1, i+2, i+3) for i in range(4)])
+
+    with open(file_path, "wb") as f:
+        fed.from_to_file(f, IOOperation.WRITE)
+
+    test_read_face_edge_data(file_path=file_path)
+
+
+
+
+
+
+
+
+
+def test_read_face_edge(file_path = package_path/"files/unit_test_cs2_parsed/face_edge.cs2.parsed"):
+    
+    fe = FaceEdge.new_face_edge()
+    with open(file_path, "rb") as f:
+        fe.from_to_file(f, IOOperation.READ)
+
+        assert fe.vertexIndex0 == 12
+        assert fe.vertexIndex1 == 13
+        assert fe.edgeIndex == 42
+        assert fe.unknown == 46
+
+
+def test_write_face_edge():
+    file_path = package_path/"garbage/face_edge.cs2.parsed"
+
+    fe = FaceEdge(12, 13, 42, 46)
+
+    with open(file_path, "wb") as f:
+        fe.from_to_file(f, IOOperation.WRITE)
+
+    test_read_face_edge(file_path=file_path)
+
+
+
+# TODO : Collision3D, BuildingPiece, DestructLevel
 
 
 if __name__ == "__main__":
