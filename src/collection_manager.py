@@ -38,6 +38,9 @@ class CollectionManager:
                 return collection.name
         return None
         
+    def get_collection_children(self, collection_name):
+        return [c.name for c in bpy.data.collections.get(collection_name).children]
+        
     def get_collection_object_list(self, collection_name):
         return [object.name for object in bpy.data.collections.get(collection_name)]
 

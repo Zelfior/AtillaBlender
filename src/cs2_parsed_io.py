@@ -5,7 +5,7 @@ from typing import IO, Any, List
 
 from src.io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
 
-debug = True
+debug = False
 
 class SomeBytes():
     length:int
@@ -17,6 +17,8 @@ class SomeBytes():
         self.value, self.length = io_bytes(io, self.value, self.length, operation)
         if debug:
             print(f"bytes of length {self.length} : {self.value} at {hex(io.tell()-1)}")
+    def __eq__(self, other:'SomeBytes'):
+        return self.length == other.length and self.value == other.value
 
 class UnicodeString():
     length:int
@@ -36,6 +38,10 @@ class UnicodeString():
 
         if debug:
             print(f"string of length {self.length} : {self.value}")
+    def __eq__(self, other:'UnicodeString'):
+        return self.length == other.length and self.value == other.value
+    def __repr__(self,):
+        return f"Unicode string of length {self.length} and value {self.value}"
     
 class Vec2d():
     x:float
@@ -51,6 +57,8 @@ class Vec2d():
 
         if debug:
             print(f"vec2d ({self.x}, {self.y})")
+    def __eq__(self, other:'Vec2d'):
+        return self.x == other.x and self.y == other.y
     
 class Vec3d():
     x:float
@@ -74,6 +82,11 @@ class Vec3d():
 
         if debug:
             print(f"vec3d ({self.x}, {self.y}, {self.z})")
+    def __eq__(self, other:'Vec3d'):
+        return self.x == other.x and self.y == other.y and self.z == other.z
+    
+    def __repr__(self,):
+        return f"Vec3d({self.x}, {self.y}, {self.z})"
     
 class BoundingBox():
     minX:float
@@ -107,6 +120,15 @@ class BoundingBox():
 
         if debug:
             print(f"bounding box ([{self.minX}, {self.maxX}], [{self.minY}, {self.maxY}], [{self.minZ}, {self.maxZ}])")
+    def __eq__(self, other:'BoundingBox'):
+        return  self.minX == other.minX and \
+                self.minY == other.minY and \
+                self.minZ == other.minZ and \
+                self.maxX == other.maxX and \
+                self.maxY == other.maxY and \
+                self.maxZ == other.maxZ
+    def __repr__(self,):
+        return f"BoundingBox ([{self.minX}, {self.maxX}], [{self.minY}, {self.maxY}], [{self.minZ}, {self.maxZ}])"
 
 class TransformMatrix():
     row0_col0:float
@@ -203,7 +225,29 @@ class TransformMatrix():
                f"| {self.row2_col0},\t{self.row2_col1},\t{self.row2_col2},\t{self.row2_col3} |\n" +\
                f"| {self.row3_col0},\t{self.row3_col1},\t{self.row3_col2},\t{self.row3_col3} |\n"
 
+    def __eq__(self, other:'TransformMatrix'):
+        are_equal = abs(self.row0_col0 - other.row0_col0) < 1e-5 and \
+                    abs(self.row1_col0 - other.row1_col0) < 1e-5 and \
+                    abs(self.row2_col0 - other.row2_col0) < 1e-5 and \
+                    abs(self.row3_col0 - other.row3_col0) < 1e-5 and \
+                    abs(self.row0_col1 - other.row0_col1) < 1e-5 and \
+                    abs(self.row1_col1 - other.row1_col1) < 1e-5 and \
+                    abs(self.row2_col1 - other.row2_col1) < 1e-5 and \
+                    abs(self.row3_col1 - other.row3_col1) < 1e-5 and \
+                    abs(self.row0_col2 - other.row0_col2) < 1e-5 and \
+                    abs(self.row1_col2 - other.row1_col2) < 1e-5 and \
+                    abs(self.row2_col2 - other.row2_col2) < 1e-5 and \
+                    abs(self.row3_col2 - other.row3_col2) < 1e-5 and \
+                    abs(self.row0_col3 - other.row0_col3) < 1e-5 and \
+                    abs(self.row1_col3 - other.row1_col3) < 1e-5 and \
+                    abs(self.row2_col3 - other.row2_col3) < 1e-5 and \
+                    abs(self.row3_col3 - other.row3_col3) < 1e-5 
 
+        if not are_equal:
+            print(self)
+            print(other)
+            return False
+        return True
 class TechNode():
     nodeName:UnicodeString
     NodeTransform:TransformMatrix
@@ -224,63 +268,81 @@ class TechNode():
 
         if debug:
             print(f"tech_node {self.nodeName.value} : {self.NodeTransform.to_matrix()}")
+    def __eq__(self, other:'TechNode'):
+        
+        for param in ["nodeName", "NodeTransform"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"TechNode have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        return True
 
 
 class FaceEdge():
     vertexIndex0:int
     vertexIndex1:int
+    faceIndex:int
     edgeIndex:int
-    unknown:int
+    neighbourFaceIndex:int
     def __init__(self, 
                     vertexIndex0:int,
                     vertexIndex1:int,
+                    faceIndex:int,
                     edgeIndex:int,
-                    unknown:int):
+                    neighbourFaceIndex:int):
         self.vertexIndex0 = vertexIndex0
         self.vertexIndex1 = vertexIndex1
+        self.faceIndex = faceIndex
         self.edgeIndex = edgeIndex
-        self.unknown = unknown
+        self.neighbourFaceIndex = neighbourFaceIndex
     def new_face_edge():
-        return FaceEdge(None, None, None, None)
+        return FaceEdge(None, None, None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         self.vertexIndex0 = io_int(io, self.vertexIndex0, operation)
         self.vertexIndex1 = io_int(io, self.vertexIndex1, operation)
+        self.faceIndex = io_int(io, self.faceIndex, operation)
         self.edgeIndex = io_int(io, self.edgeIndex, operation)
-        self.unknown = io_int(io, self.unknown, operation)
+        self.neighbourFaceIndex = io_int(io, self.neighbourFaceIndex, operation)
 
         if debug:
-            print(f"faceedge : {self.vertexIndex0}, {self.vertexIndex1}, {self.edgeIndex}, {self.unknown}")
+            print(self)
     def __repr__(self):
-        return f"FaceEdge : {self.vertexIndex0}, {self.vertexIndex1}, {self.edgeIndex}, {self.unknown}"
-
+        return f"FaceEdge : {self.vertexIndex0}, {self.vertexIndex1}, {self.faceIndex}, {self.edgeIndex}, {self.neighbourFaceIndex}"
+    def __eq__(self, other:'FaceEdge'):
+        return self.vertexIndex0 == other.vertexIndex0 and \
+                self.vertexIndex1 == other.vertexIndex1 and\
+                self.edgeIndex  == other.edgeIndex  and\
+                self.faceIndex == other.faceIndex  and\
+                self.neighbourFaceIndex == other.neighbourFaceIndex
+    
 class FaceEdgeData():
     edge0:FaceEdge
     edge1:FaceEdge
     edge2:FaceEdge
-    edge3:FaceEdge
+    someint:int = 0
     def __init__(self, 
                     edge0:FaceEdge,
                     edge1:FaceEdge,
-                    edge2:FaceEdge,
-                    edge3:FaceEdge):
+                    edge2:FaceEdge):
         self.edge0 = edge0
         self.edge1 = edge1
         self.edge2 = edge2
-        self.edge3 = edge3
     def new_face_edge_data():
-        return FaceEdgeData(None, None, None, None)
+        return FaceEdgeData(None, None, None)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         if operation == IOOperation.READ:
             self.edge0 = FaceEdge.new_face_edge()
             self.edge1 = FaceEdge.new_face_edge()
             self.edge2 = FaceEdge.new_face_edge()
-            self.edge3 = FaceEdge.new_face_edge()
         self.edge0.from_to_file(io, operation)
         self.edge1.from_to_file(io, operation)
         self.edge2.from_to_file(io, operation)
-        self.edge3.from_to_file(io, operation)
+        self.someint = io_int(io, self.someint, operation)
     def __repr__(self):
-        return f"FaceEdgeData :\n     {self.edge0},\n     {self.edge1},\n     {self.edge2},\n     {self.edge3}"
+        return f"FaceEdgeData :\n     {self.edge0},\n     {self.edge1},\n     {self.edge2}"
+    def __eq__(self, other:'FaceEdgeData'):
+        return self.edge0 == other.edge0 and \
+                self.edge1 == other.edge1 and\
+                self.edge2 == other.edge2
 
 class Face():
     faceIndex:int
@@ -288,6 +350,7 @@ class Face():
     vertIndex1:int
     vertIndex2:int
     edgeData:FaceEdgeData
+    padding=SomeBytes(1, b"\x00")
 
     def __init__(self, 
                     faceIndex:int,
@@ -320,8 +383,15 @@ class Face():
         self.vertIndex2 = io_int(io, self.vertIndex2, operation)
         self.edgeData.from_to_file(io, operation)
 
-        # print(f"Face:\n     {self.faceIndex}\n     {self.padding.value}\n     {self.vertIndex0}\n     {self.vertIndex1}\n     {self.vertIndex2} \n{self.edgeData}")
+    def __repr__(self,):
+        return f"Face index {self.faceIndex} :\n     {self.padding.value}\n     {self.vertIndex0}\n     {self.vertIndex1}\n     {self.vertIndex2} \n{self.edgeData}"
 
+    def __eq__(self, other:'Face'):
+        return  self.faceIndex == other.faceIndex and \
+                self.vertIndex0 == other.vertIndex0 and\
+                self.vertIndex1  == other.vertIndex1  and\
+                self.vertIndex2 == other.vertIndex2 and \
+                self.edgeData == other.edgeData
 
 class Collision3D():
     collisionName:UnicodeString
@@ -362,9 +432,13 @@ class Collision3D():
         self.collisionName.from_to_file(io, operation)
 
         self.nodeIndex = io_int(io, self.nodeIndex, operation)
+        if debug:
+            print(f"collision 3D node index {self.nodeIndex}")
         self.unknown2 = io_int(io, self.unknown2, operation)
 
         self.numVerts = io_int(io, self.numVerts, operation)
+        if debug:
+            print(f"collision 3D num verts {self.numVerts}")
         
         for i in range(self.numVerts):
             if operation == IOOperation.READ:
@@ -382,6 +456,25 @@ class Collision3D():
             else:
                 self.dataFaces[i].from_to_file(io, operation)
                 
+    def __eq__(self, other:'Collision3D'):
+        # Not testing nodeIndex.
+        for param in ["collisionName", "unknown2", "numVerts", "numFaces"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"Collision3D have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.dataVerts)):
+            if self.dataVerts[i] != other.dataVerts[i]:
+                print(f"Collision3D have different vertex {i}, found {self.dataVerts[i]} and {other.dataVerts[i]}")
+                return False
+            
+        for i in range(len(self.dataFaces)):
+            if self.dataFaces[i] != other.dataFaces[i]:
+                print(f"Collision3D have different face {i}, found {self.dataFaces[i]} and {other.dataFaces[i]}")
+                return False
+        return True
+
+
 class LineNode():
     lineName:UnicodeString
     numVerts:int
@@ -419,6 +512,18 @@ class LineNode():
         
         self.lineType = io_int(io, self.lineType, operation)
         
+    def __eq__(self, other:'LineNode'):
+        for param in ["lineName", "numVerts", "lineType"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"LineNode have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.dataVerts)):
+            if self.dataVerts[i] != other.dataVerts[i]:
+                print(f"LineNode have different vertex {i}")
+                return False
+            
+        return True
 
 class NogoZone():
     numLines:int
@@ -451,6 +556,18 @@ class NogoZone():
                 self.dataLines[i].from_to_file(io, operation)
                 self.numLinesConnected[i] = io_int(io, self.numLinesConnected[i], operation)
                 
+    def __eq__(self, other:'NogoZone'):
+        for param in ["numLines", "numLinesConnected"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"LineNode have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.dataLines)):
+            if self.dataLines[i] != other.dataLines[i]:
+                print(f"LineNode have different vertex {i}")
+                return False
+            
+        return True
 
 class Polygon():
     normal:Vec3d
@@ -510,6 +627,19 @@ class Polygon():
         
         self.somebyte_2.from_to_file(io, operation)
 
+    def __eq__(self, other:'Polygon'):
+        for param in ["normal", "numVerts", "isPlatformGround"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"Polygons have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.dataVerts)):
+            if self.dataVerts[i] != other.dataVerts[i]:
+                print(f"Polygons have different vertex {i}")
+                return False
+            
+        return True
+
 class Platform():
     numPolygons:int
     dataPolygons:List[Polygon]
@@ -542,6 +672,21 @@ class Platform():
         if debug:
             print(f"Reading int at {hex(io.tell())}")
         self.some_int = io_int(io, self.some_int, operation)
+
+
+    def __eq__(self, other:'Platform'):
+        for param in ["numPolygons", "some_int"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"Platform have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.dataPolygons)):
+            if self.dataPolygons[i] != other.dataPolygons[i]:
+                print(f"Platform have different polygon {i}")
+                return False
+            
+        return True
+    
 
 class SoftCollision():
     nodeName:UnicodeString
@@ -580,10 +725,19 @@ class SoftCollision():
         self.cylinderRadius = io_float(io, self.cylinderRadius, operation)
         self.cylinderHeight = io_float(io, self.cylinderHeight, operation)    
 
-        print(self)
     def __repr__(self):
         return f"SoftCollision {self.nodeName.value} : \n    r {self.cylinderRadius}\n    h {self.cylinderHeight}\n    matrix \n{self.nodeTransform}"
 
+    
+    def __eq__(self, other:'SoftCollision'):
+        # not testing someshort
+        for param in ["nodeName", "nodeTransform", "cylinderRadius", "cylinderHeight", ]: #, "some_short"
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"SoftCollision have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+            
+        return True
+    
 class FileRef():
     fileKey:UnicodeString
     fileName:UnicodeString
@@ -614,6 +768,14 @@ class FileRef():
         
         self.fileTransform.from_to_file(io, operation)
         self.some_short = io_short(io, self.some_short, operation)
+
+    def __eq__(self, other:'FileRef'):
+        for param in ["fileKey", "fileName", "fileTransform"]:#, "some_short"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"FileRef have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+            
+        return True
 
 class EFLine():
     lineName:UnicodeString
@@ -660,11 +822,26 @@ class EFLine():
         self.parentIndex = io_int(io, self.parentIndex, operation)
         print("Parent index", self.parentIndex)
 
-        if debug:
-            print(f"line {self.lineName.value}, parent {self.parentIndex}")
+        if True or debug:
+            print(f"line {self.lineName.value}, parent {self.parentIndex}, lineAction {self.lineAction}")
             print(f"start {self.lineStart.x}, {self.lineStart.y}, {self.lineStart.z}")
             print(f"End {self.lineEnd.x}, {self.lineEnd.y}, {self.lineEnd.z}")
             print(f"Dir {self.lineDir.x}, {self.lineDir.y}, {self.lineDir.z}")
+    def __eq__(self, other:'EFLine'):
+        # not testing lineaction and parent index
+        for param in ["lineName", "lineStart", "lineEnd"]:#, "lineAction", "parentIndex"
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"EFLine have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        if abs(other.lineDir.x - self.lineDir.x) + abs(other.lineDir.y - self.lineDir.y) + abs(other.lineDir.z - self.lineDir.z) > 1e-2:
+                print(f"EFLine have different lineDir, found {self.__getattribute__('lineDir')} and {other.__getattribute__('lineDir')}")
+                return False
+            
+        return True
+
+
+
 
 class VFXAttachment():
     numIndices:int
@@ -689,6 +866,20 @@ class VFXAttachment():
                 self.dataIndices[i] = io_short(io, self.dataIndices[i], operation)
             else:
                 self.dataIndices[i] = io_short(io, self.dataIndices[i], operation)
+
+    def __eq__(self, other:'VFXAttachment'):
+        for param in ["numIndices"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"VFXAttachment have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.dataIndices)):
+            if self.dataIndices[i] != other.dataIndices[i]:
+                print(f"VFXAttachment have different index {i}")
+                return False
+            
+        return True
+    
         
 
 class DestructLevel():
@@ -709,6 +900,7 @@ class DestructLevel():
     numPipes:int
     dataPipes:List[LineNode]
     platforms:Platform
+    bounding_box:BoundingBox
     numCannons:int
     dataCannons:List[TechNode]
     numArrowEmitters:int
@@ -723,8 +915,12 @@ class DestructLevel():
     dataEFLines:List[EFLine]
     numActionVFX:int
     ActionVFX:List[TechNode]
+    numActionVFX2:int
+    ActionVFX2:List[TechNode]
     numAttActionVFX:int
     attActionVFX:List[VFXAttachment]
+    numAttActionVFX2:int
+    attActionVFX2:List[VFXAttachment]
 
     def __init__(self, 
                     destructName:UnicodeString,
@@ -743,6 +939,7 @@ class DestructLevel():
                     numPipes:int,
                     dataPipes:List[LineNode],
                     platforms:Platform,
+                    bounding_box:BoundingBox,
                     numCannons:int,
                     dataCannons:List[TechNode],
                     numArrowEmitters:int,
@@ -757,8 +954,12 @@ class DestructLevel():
                     dataEFLines:List[EFLine],
                     numActionVFX:int,
                     ActionVFX:List[TechNode],
+                    numActionVFX2:int,
+                    ActionVFX2:List[TechNode],
                     numAttActionVFX:int,
-                    attActionVFX:List[VFXAttachment]):
+                    attActionVFX:List[VFXAttachment],
+                    numAttActionVFX2:int,
+                    attActionVFX2:List[VFXAttachment]):
         self.destructName = destructName 
         self.destructIndex = destructIndex 
         self.collision3dMesh = collision3dMesh 
@@ -775,6 +976,7 @@ class DestructLevel():
         self.numPipes = numPipes 
         self.dataPipes = dataPipes
         self.platforms = platforms 
+        self.bounding_box = bounding_box
         self.numCannons = numCannons 
         self.dataCannons = dataCannons
         self.numArrowEmitters = numArrowEmitters 
@@ -789,15 +991,21 @@ class DestructLevel():
         self.dataEFLines = dataEFLines
         self.numActionVFX = numActionVFX
         self.ActionVFX = ActionVFX
+        self.numActionVFX2 = numActionVFX2
+        self.ActionVFX2 = ActionVFX2
         self.numAttActionVFX = numAttActionVFX
         self.attActionVFX = attActionVFX
+        self.numAttActionVFX2 = numAttActionVFX2
+        self.attActionVFX2 = attActionVFX2
+
     def new_destruct_level():
         return DestructLevel(None, None, None, None, None,
                              None, None, None, None, None,
-                             None, None, None, None, None,
+                             None, None, None, None, None,None,
                              None, None, None, None, None,
                              None, None, None, None, None, 
-                             None, None, None, 0, None,
+                             None, None, None, 0, None, 0, None,
+                             0, None,
                              0, None)
     
     def from_to_file(self, io:IO, operation:IOOperation, version = 11, has_vfx = False):
@@ -822,6 +1030,8 @@ class DestructLevel():
             
             self.ActionVFX = []
             self.attActionVFX = []
+            self.ActionVFX2 = []
+            self.attActionVFX2 = []
 
         self.destructName.from_to_file(io, operation)
         self.destructIndex = io_int(io, self.destructIndex, operation)
@@ -884,17 +1094,13 @@ class DestructLevel():
             
             self.dataNogo[i].from_to_file(io, operation)
 
-        if debug:
-            print("platform")
         if operation == IOOperation.READ:
             self.platforms = Platform.new_platform()
         self.platforms.from_to_file(io, operation)
 
-        if debug:
-            print("OPERATION")
         if operation == IOOperation.READ:
-            self.destruct_bbox:BoundingBox = BoundingBox.new_bounding_box()
-        self.destruct_bbox.from_to_file(io, operation)
+            self.bounding_box:BoundingBox = BoundingBox.new_bounding_box()
+        self.bounding_box.from_to_file(io, operation)
 
         self.numCannons = io_int(io, self.numCannons, operation)
         if debug:
@@ -976,18 +1182,19 @@ class DestructLevel():
             self.numActionVFX = io_int(io, self.numActionVFX, operation)
             if debug:
                 print(f"Found {self.numActionVFX} ActionVFX")
+                
             for i in range(self.numActionVFX):
                 if operation == IOOperation.READ:
                     self.ActionVFX.append(TechNode.new_tech_node())
                 
                 self.ActionVFX[i].from_to_file(io, operation)
             
-            self.numActionVFX = io_int(io, self.numActionVFX, operation)
-            for i in range(self.numActionVFX):
+            self.numActionVFX2 = io_int(io, self.numActionVFX2, operation)
+            for i in range(self.numActionVFX2):
                 if operation == IOOperation.READ:
-                    self.ActionVFX.append(TechNode.new_tech_node())
+                    self.ActionVFX2.append(TechNode.new_tech_node())
                 
-                self.ActionVFX[i].from_to_file(io, operation)
+                self.ActionVFX2[i].from_to_file(io, operation)
                 
 
             
@@ -998,14 +1205,33 @@ class DestructLevel():
                 
                 self.attActionVFX[i].from_to_file(io, operation)
             
-            self.numAttActionVFX = io_int(io, self.numAttActionVFX, operation)
-            for i in range(self.numAttActionVFX):
+            self.numAttActionVFX2 = io_int(io, self.numAttActionVFX2, operation)
+            for i in range(self.numAttActionVFX2):
                 if operation == IOOperation.READ:
-                    self.attActionVFX.append(VFXAttachment.new_vfx_attachment())
+                    self.attActionVFX2.append(VFXAttachment.new_vfx_attachment())
                 
-                self.attActionVFX[i].from_to_file(io, operation)
+                self.attActionVFX2[i].from_to_file(io, operation)
         
+    def __eq__(self, other:'DestructLevel'):
+        for param in ["destructName", "destructIndex", "collision3dMesh", "numWindows", "numDoors", "numSpecial", "numLines", "numNogo", "numPipes", "platforms", "bounding_box", "numCannons", "numArrowEmitters", "numDockingPoints", "numSoftCollisions", "numFileRefs", "numEFLines", "numActionVFX", "numActionVFX2"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"DestructLevel have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
         
+        #   Not comparing the vfx attachments
+        for param in ["collision3dWindows", "collision3dDoors", "collision3dSpecial", "dataLines", "dataNogo", "dataPipes", "dataCannons", "dataArrowEmitters", "dataDockingPoints", "dataSoftCollisions", "dataFileRefs", "dataEFLines", "ActionVFX", "ActionVFX2"]:    
+            if len(self.__getattribute__(param)) != len(other.__getattribute__(param)):
+                print(f"Params {param} have different length, found {len(self.__getattribute__(param))} and {len(other.__getattribute__(param))}")
+            for i in range(len(self.__getattribute__(param))):
+                
+                if self.__getattribute__(param)[i] != other.__getattribute__(param)[i]:
+                    print(f"DestructLevel have different {param}, found {self.__getattribute__(param)[i]} and {other.__getattribute__(param)[i]}")
+                    return False
+            
+        return True
+        
+
+
 
 class BuildingPiece():
     pieceName:UnicodeString
@@ -1055,6 +1281,19 @@ class BuildingPiece():
 
         if array_size > 0:
             raise ValueError("Unknown array detected.")
+    def __eq__(self, other:'BuildingPiece'):
+        for param in ["pieceName", "placementNode", "parentIndex", "destructCount"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"BuildingPiece have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.destructs)):
+            if self.destructs[i] != other.destructs[i]:
+                print(f"BuildingPiece have different destructs {i}")
+                return False
+            
+        return True
+
 
 class Cs2File:
     version:int
@@ -1113,6 +1352,19 @@ class Cs2File:
 
             for i in range(self.piece_count):
                 self.building_pieces[i].from_to_file(f, operation, version=self.version, has_vfx=has_vfx)
+    def __eq__(self, other:'Cs2File'):
+        for param in ["version",    "bbox",    "flag",    "piece_count"]:
+            if self.__getattribute__(param) != other.__getattribute__(param):
+                print(f"Cs2File have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                return False
+        
+        for i in range(len(self.building_pieces)):
+            if self.building_pieces[i] != other.building_pieces[i]:
+                print(f"Cs2File have different BuildingPiece {i}")
+                return False
+            
+        return True
+
     
 if __name__ == "__main__":
     input_path = Path("F:\\Workspace\\TotalWarModding\\files\\cs2_parsed\\30_30_10\\30_30_10_tech.cs2.parsed")

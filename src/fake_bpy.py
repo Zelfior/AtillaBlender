@@ -2,18 +2,23 @@
 from typing import Any, Dict, List, Tuple
 from src.cs2_parsed_io import Vec3d, Face, TransformMatrix
 
-
+debug = True
 """
     FakeMeshEditor to test the blender interface
 """
 class FakeMeshEditor:
     
-    def __init__(self):
-        self.cm = FakeCollectionManager()
+    def __init__(self, cm = None):
+        if cm is not None:
+            self.cm = cm
 
         self.objects_data:Dict[str, Tuple[List[Vec3d], List[Tuple[int, int]], List[Face]]] = {}
         self.objects_transform:Dict[str, TransformMatrix] = {}
+
         self.empty:Dict[str, TransformMatrix] = {}
+
+        self.objects_normal:Dict[str, List[Vec3d]] = {}
+        
         
     def apply_transform_matrix(self, object_name:str, matrix:TransformMatrix):
         self.objects_transform[object_name] = matrix
@@ -26,53 +31,97 @@ class FakeMeshEditor:
         else:
             raise KeyError
     
-    def make_py_data(self, object_name:str,
-                              swap_yz = True):
+    def make_py_data(self, 
+                        object_name:str,
+                        swap_yz = True):
         vertex_list, edge_list, face_list = self.objects_data[object_name]
 
-        if swap_yz:
-            for i in range(len(vertex_list)):
-                vertex_list[i] = [vertex_list[i].x, vertex_list[i].z, vertex_list[i].y]
+        v_list = vertex_list.copy()
+        e_list = edge_list.copy()
+        f_list = face_list.copy()
 
-        print(vertex_list )
-        return vertex_list, edge_list, face_list
+        for v in range(len(v_list)):
+            if isinstance(v_list[v], list):
+                v_list[v] = Vec3d(*v)
+
+        if swap_yz:
+            for i in range(len(v_list)):
+                v_list[i] = Vec3d(v_list[i].x, v_list[i].z, v_list[i].y)
+
+        if object_name in self.objects_normal:
+            n_list = self.objects_normal[object_name]
+        else:
+            n_list = []
+
+        return v_list, e_list, f_list, n_list
 
 
     def make_object_from_data(self, 
                               object_name:str, 
                               vertex_list:List[Tuple[float, float, float] | Vec3d], 
                               edge_list:List[Tuple[int, int]], 
-                              face_list:List[List[float] | Face],
-                              swap_yz = True):
-        print(f"Making object {object_name}")
-        v_list = [[v.x, v.y, v.z] if isinstance(v, Vec3d) else v for v in vertex_list]
-        f_list = [f if isinstance(f, Face) else Face(*f) for f in face_list]
+                              face_list:List[Face],
+                              swap_yz = True,
+                              normals = []):
+        if debug:
+            print(f"Making object {object_name}")
+        name = object_name
+        if name in self.objects_data:
+            i = 1
+            name = f"{object_name}.{i:03}"
+            while name in self.objects_data:
+                i += 1
+                name = f"{object_name}.{i:03}"
+            if debug:
+                print(f"Renaming {object_name} to {name}")
+
+        v_list = [v if isinstance(v, Vec3d) else Vec3d(*v)  for v in vertex_list]
+        f_list = face_list
 
         if swap_yz:
             for i in range(len(v_list)):
-                v_list[i] = [v_list[i][0], v_list[i][2], v_list[i][1]]
+                v_list[i] = Vec3d(v_list[i].x, v_list[i].z, v_list[i].y)
 
-        for i in range(len(v_list)):
-            v_list[i] = Vec3d(*v_list[i])
+        self.objects_data[name] = (v_list, edge_list, f_list)
 
-        self.objects_data[object_name] = (v_list, edge_list, f_list)
+        if not normals == []:
+            self.objects_normal[name] = normals
 
-        return object_name
+        return name
 
     def make_empty(self, empty_name:str, matrix):
-        self.empty[empty_name] = matrix
+        name = empty_name
+        if name in self.empty:
+            i = 1
+            name = f"{empty_name}.{i:03}"
+            while name in self.empty:
+                i += 1
+                name = f"{empty_name}.{i:03}"
+            print(f"Renaming {empty_name} to {name}")
 
-        return empty_name
+        self.empty[name] = matrix
+
+        return name
 
     def make_cylinder(self, radius:float, height:float, name:str, collection_name:str, node_transorm:TransformMatrix):
-        center_coordinates = (0, 0, 0)
+        new_name = name
+        if new_name in self.objects_data:
+            i = 1
+            new_name = f"{name}.{i:03}"
+            while new_name in self.objects_data:
+                i += 1
+                new_name = f"{name}.{i:03}"
+            print(f"Renaming {name} to {new_name}")
 
-        self.make_object_from_data(name, [
-            [center_coordinates[0]-radius, center_coordinates[1]-radius, center_coordinates[2]],
-            [center_coordinates[0]-radius, center_coordinates[1]-radius, center_coordinates[2]+height]
+        matrix = node_transorm.to_matrix()
+        center_coordinates = (matrix[0][3], matrix[1][3], matrix[2][3])
+
+        self.make_object_from_data(new_name, [
+            [center_coordinates[0]-radius, center_coordinates[1]-radius, center_coordinates[2]-height],
+            [center_coordinates[0]+radius, center_coordinates[1]+radius, center_coordinates[2]+height]
         ], [], [])
 
-        self.cm.move_object_to_collection(name, collection_name)
+        self.cm.move_object_to_collection(new_name, collection_name)
 
 class CollectionElement:
     def __init__(self, name):
@@ -132,13 +181,23 @@ class FakeCollectionManager:
         return self.collection_master.children[0].name
         
     def move_object_to_collection(self, object_name:str, collection_name:str):
-        print(f"Moving {object_name} to {collection_name}")
+        if debug:
+            print(f"Moving {object_name} to {collection_name}")
+
         target_col = self.collection_master.get_collection_element_recursive(collection_name)
         self.collection_master.remove_object_recursive(object_name)
-
+        
         target_col.objects.append(object_name)
 
             
+    def get_collection_children(self, collection_name):
+        col = self.collection_master.get_collection_element_recursive(collection_name)
+
+        if col is not None:
+            return [c.name for c in col.children]
+        
+        return None
+    
     def get_collection_parent(self, collection_name):
         col = self.collection_master.get_collection_parent_recursive(collection_name)
 
@@ -184,7 +243,8 @@ class FakeCollectionManager:
         return self.collection_master.get_collection_element_recursive(collection_name) is not None
             
     def new_collection(self, collection_name, parent_collection_name, clear = False):
-        print(f"Adding collection {collection_name} in {parent_collection_name}")
+        if debug:
+            print(f"Adding collection {collection_name} in {parent_collection_name}")
         col = self.collection_master.get_collection_element_recursive(parent_collection_name)
 
         if col is not None:

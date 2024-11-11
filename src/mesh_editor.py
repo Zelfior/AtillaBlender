@@ -127,7 +127,9 @@ class MeshEditor:
         for p in obj_data.polygons:
             face_list.append((v for v in p.vertices))
 
-        return vertex_list, edge_list, face_list
+        normal_list = [p.normal for p in obj_data.polygons]
+
+        return vertex_list, edge_list, face_list, normal_list
 
 
     def make_object_from_data(self, 
@@ -135,7 +137,8 @@ class MeshEditor:
                               vertex_list:List[Tuple[float, float, float] | Vec3d], 
                               edge_list:List[Tuple[int, int]], 
                               face_list:List[List[float] | Face],
-                              swap_yz = True):
+                              swap_yz = True,
+                              normals = []):
         
         me = bpy.data.meshes.new(f"{object_name}_name")
         self.cm.rename_object(me, f"{object_name}_name")

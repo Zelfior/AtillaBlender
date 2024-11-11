@@ -40,7 +40,9 @@ def run_test(file_path, version = 11):
         cs2.read_write_file(input_path.absolute(), 
                                 IOOperation.READ, 
                                 has_vfx=True)
+        
     except struct.error:
+        cs2 = Cs2File.new_cs2file()
         cs2.read_write_file(input_path.absolute(), 
                                 IOOperation.READ, 
                                 has_vfx=False)
@@ -52,29 +54,7 @@ def run_test(file_path, version = 11):
     b2c = BlenderToCs2(c2b.cm, c2b.me)
     cs2_output = b2c.make_cs2(version=version)
 
-    cs2_output.read_write_file(file_name,   
-                            IOOperation.WRITE, has_vfx=has_)
-
-    with open(input_path.absolute(), "rb") as ref_file:
-        with open(file_name, "rb") as output_file:
-            i = 0
-            past_position = -1
-            while True:
-                ref_byte = ref_file.read(1)
-                output_byte = output_file.read(1)
-
-                if ref_file.tell() == past_position:
-                    break
-                else:
-                    past_position = ref_file.tell()
-
-                if ref_byte == output_byte:
-                    i += 1
-                else:
-                    assert False, f"Error at position {i} : {hex(i)}, ref {ref_byte}, found {output_byte}"
-            
-            print("Both files are identical")
-            assert True
+    assert cs2 == cs2_output
 
 
 
@@ -91,83 +71,81 @@ def run_test(file_path, version = 11):
 
 
 
-
-
-@pytest.mark.skip(reason="blender to cs2 not yet implemented")
 def test_30_30_10_tech():
     file_path = package_path/"files/cs2_parsed/30_30_10/30_30_10_tech.cs2.parsed"
 
     run_test(file_path.absolute(), version=13)
 
-# def test_arena_tech():
-#     file_path = package_path/"files/cs2_parsed/arena/arena_tech.cs2.parsed"
+def test_arena_tech():
+    file_path = package_path/"files/cs2_parsed/arena/arena_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute())
 
-# def test_athens_acropolis_tech():
-#     file_path = package_path/"files/cs2_parsed/athens_acropolis/athens_acropolis_tech.cs2.parsed"
+def test_athens_acropolis_tech():
+    file_path = package_path/"files/cs2_parsed/athens_acropolis/athens_acropolis_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute())
 
-# def test_attila_cliff_01_tech():
-#     file_path = package_path/"files/cs2_parsed/attila_cliff_01/attila_cliff_01_tech.cs2.parsed"
+def test_attila_cliff_01_tech():
+    file_path = package_path/"files/cs2_parsed/attila_cliff_01/attila_cliff_01_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_banner01_tech():
-#     file_path = package_path/"files/cs2_parsed/banner01/banner01_tech.cs2.parsed"
+def test_banner01_tech():
+    file_path = package_path/"files/cs2_parsed/banner01/banner01_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_barbarian_fort_curved_bastion_tech():
-#     file_path = package_path/"files/cs2_parsed/barbarian_fort_curved_bastion/barbarian_fort_curved_bastion_tech.cs2.parsed"
+def test_barbarian_fort_curved_bastion_tech():
+    file_path = package_path/"files/cs2_parsed/barbarian_fort_curved_bastion/barbarian_fort_curved_bastion_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute())
 
-# def test_bridge_stone_1_tech():
-#     file_path = package_path/"files/cs2_parsed/bridge_stone_1/bridge_stone_1_tech.cs2.parsed"
+def test_bridge_stone_1_tech():
+    file_path = package_path/"files/cs2_parsed/bridge_stone_1/bridge_stone_1_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_crane_tech():
-#     file_path = package_path/"files/cs2_parsed/crane/crane_tech.cs2.parsed"
+def test_crane_tech():
+    file_path = package_path/"files/cs2_parsed/crane/crane_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_eastern_villa_house01_tech():
-#     file_path = package_path/"files/cs2_parsed/eastern_villa_house01/eastern_villa_house01_tech.cs2.parsed"
+def test_eastern_villa_house01_tech():
+    file_path = package_path/"files/cs2_parsed/eastern_villa_house01/eastern_villa_house01_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_eastern_villa_stables_tech():
-#     file_path = package_path/"files/cs2_parsed/eastern_villa_stables/eastern_villa_stables_tech.cs2.parsed"
+def test_eastern_villa_stables_tech():
+    file_path = package_path/"files/cs2_parsed/eastern_villa_stables/eastern_villa_stables_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_western_villa_house02_tech():
-#     file_path = package_path/"files/cs2_parsed/western_villa_house02/western_villa_house02_tech.cs2.parsed"
+def test_western_villa_house02_tech():
+    file_path = package_path/"files/cs2_parsed/western_villa_house02/western_villa_house02_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_western_villa_stables_tech():
-#     file_path = package_path/"files/cs2_parsed/western_villa_stables/western_villa_stables_tech.cs2.parsed"
+def test_western_villa_stables_tech():
+    file_path = package_path/"files/cs2_parsed/western_villa_stables/western_villa_stables_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_western_villa_straight01_tech():
-#     file_path = package_path/"files/cs2_parsed/western_villa_straight01/western_villa_straight01_tech.cs2.parsed"
+def test_western_villa_straight01_tech():
+    file_path = package_path/"files/cs2_parsed/western_villa_straight01/western_villa_straight01_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_western_villa_straight02_tech():
-#     file_path = package_path/"files/cs2_parsed/western_villa_straight02/western_villa_straight02_tech.cs2.parsed"
+def test_western_villa_straight02_tech():
+    file_path = package_path/"files/cs2_parsed/western_villa_straight02/western_villa_straight02_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
-# def test_western_villa_tabernae_tech():
-#     file_path = package_path/"files/cs2_parsed/western_villa_tabernae/western_villa_tabernae_tech.cs2.parsed"
+def test_western_villa_tabernae_tech():
+    file_path = package_path/"files/cs2_parsed/western_villa_tabernae/western_villa_tabernae_tech.cs2.parsed"
 
-#     run_test(file_path.absolute())
+    run_test(file_path.absolute(), version=13)
 
 if __name__ == "__main__":
-    test_athens_acropolis_tech()
+    # test_athens_acropolis_tech()
+    ...

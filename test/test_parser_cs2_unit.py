@@ -421,18 +421,20 @@ def test_read_face_edge_data(file_path = package_path/"files/unit_test_cs2_parse
     with open(file_path, "rb") as f:
         fed.from_to_file(f, IOOperation.READ)
 
-        edges = [fed.edge0, fed.edge1, fed.edge2, fed.edge3]
-        for i in range(4):
+        edges = [fed.edge0, fed.edge1, fed.edge2]
+
+        for i in range(3):
             assert edges[i].vertexIndex0 == i
             assert edges[i].vertexIndex1 == i+1
-            assert edges[i].edgeIndex == i+2
-            assert edges[i].unknown == i+3
+            assert edges[i].faceIndex == i+2
+            assert edges[i].edgeIndex == i+3
+            assert edges[i].neighbourFaceIndex == i+4
 
 
 def test_write_face_edge_data():
     file_path = package_path/"garbage/face_edge_data.cs2.parsed"
 
-    fed = FaceEdgeData(*[FaceEdge(i, i+1, i+2, i+3) for i in range(4)])
+    fed = FaceEdgeData(*[FaceEdge(i, i+1, i+2, i+3, i+4) for i in range(3)])
 
     with open(file_path, "wb") as f:
         fed.from_to_file(f, IOOperation.WRITE)
@@ -455,14 +457,15 @@ def test_read_face_edge(file_path = package_path/"files/unit_test_cs2_parsed/fac
 
         assert fe.vertexIndex0 == 12
         assert fe.vertexIndex1 == 13
-        assert fe.edgeIndex == 42
-        assert fe.unknown == 46
+        assert fe.faceIndex == 42
+        assert fe.edgeIndex == 46
+        assert fe.neighbourFaceIndex == 12
 
 
 def test_write_face_edge():
     file_path = package_path/"garbage/face_edge.cs2.parsed"
 
-    fe = FaceEdge(12, 13, 42, 46)
+    fe = FaceEdge(12, 13, 42, 46, 12)
 
     with open(file_path, "wb") as f:
         fe.from_to_file(f, IOOperation.WRITE)
