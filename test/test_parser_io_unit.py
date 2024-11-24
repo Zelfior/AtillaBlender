@@ -14,8 +14,9 @@ from src.io_elementary import IOOperation, io_short, io_float, io_bytes, io_int,
 """
 
 os.makedirs("garbage", exist_ok=True)
+os.makedirs("garbage/test_generated_files", exist_ok=True,)
 
-files = glob.glob('garbage/*')
+files = glob.glob('garbage/test_generated_files/*')
 for f in files:
     if os.path.isfile(f):
         os.remove(f)
@@ -50,7 +51,7 @@ def test_read_float(file_path = package_path/"files/unit_test_cs2_parsed/float_1
         assert val == 12.5
 
 def test_write_float():
-    file_path = package_path/"garbage/float_12.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/float_12.cs2.parsed"
 
     with open(file_path, "wb") as f:
         val = io_float(f, 12.5, IOOperation.WRITE)
@@ -64,7 +65,7 @@ def test_read_int(file_path = package_path/"files/unit_test_cs2_parsed/int_12.cs
         assert val == 12
 
 def test_write_int():
-    file_path = package_path/"garbage/int_12.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/int_12.cs2.parsed"
 
     with open(file_path, "wb") as f:
         val = io_int(f, 12, IOOperation.WRITE)
@@ -78,7 +79,7 @@ def test_read_short(file_path = package_path/"files/unit_test_cs2_parsed/short_1
         assert val == 12
 
 def test_write_short():
-    file_path = package_path/"garbage/short_12.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/short_12.cs2.parsed"
 
     with open(file_path, "wb") as f:
         val = io_short(f, 12, IOOperation.WRITE)
@@ -93,7 +94,7 @@ def test_read_bytes(file_path = package_path/"files/unit_test_cs2_parsed/bytes_1
         assert val == b"\x00\x01\x12\x20"
 
 def test_write_bytes():
-    file_path = package_path/"garbage/bytes_12.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/bytes_12.cs2.parsed"
 
     with open(file_path, "wb") as f:
         val, count = io_bytes(f, b"\x00\x01\x12\x20", 4, IOOperation.WRITE)
@@ -107,7 +108,7 @@ def test_read_str(file_path = package_path/"files/unit_test_cs2_parsed/str_12.cs
         assert val == "hello world"
 
 def test_write_str():
-    file_path = package_path/"garbage/str_12.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/str_12.cs2.parsed"
 
     with open(file_path, "wb") as f:
         val = io_str(f, "hello world", IOOperation.WRITE)

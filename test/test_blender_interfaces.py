@@ -1,10 +1,7 @@
 
-import glob
 import os
 from pathlib import Path
-import sys
 import struct
-import pytest
 
 from src.blender_to_cs2 import BlenderToCs2
 from src.cs2_to_blender import Cs2ToBlender
@@ -14,12 +11,6 @@ package_path = Path(__file__).absolute().parent.parent
 from src.cs2_parsed_io import Cs2File
 from src.io_elementary import IOOperation
 
-os.makedirs("garbage", exist_ok=True)
-
-files = glob.glob('garbage/*')
-for f in files:
-    if os.path.isfile(f):
-        os.remove(f)
 
 def run_test(file_path, version = 11):
 
@@ -30,11 +21,7 @@ def run_test(file_path, version = 11):
         
     input_path = Path(file_path)
 
-    file_name = "garbage/through_bpy_"+input_path.name
-
     cs2 = Cs2File.new_cs2file()
-
-    has_ = True
 
     try:
         cs2.read_write_file(input_path.absolute(), 
@@ -46,7 +33,6 @@ def run_test(file_path, version = 11):
         cs2.read_write_file(input_path.absolute(), 
                                 IOOperation.READ, 
                                 has_vfx=False)
-        has_ = False
         
     c2b = Cs2ToBlender()
     c2b.make_cs2(cs2, "")

@@ -8,9 +8,10 @@ from src.cs2_parsed_io import Platform, EFLine, BoundingBox, TechNode, BuildingP
 
 from src.io_elementary import IOOperation
 
-os.makedirs("garbage", exist_ok=True)
+os.makedirs("garbage", exist_ok=True,)
+os.makedirs("garbage/test_generated_files", exist_ok=True,)
 
-files = glob.glob('garbage/*')
+files = glob.glob('garbage/test_generated_files/*')
 for f in files:
     if os.path.isfile(f):
         os.remove(f)
@@ -57,7 +58,7 @@ def test_read_vec2d(file_path = package_path/"files/unit_test_cs2_parsed/vec2d.c
         assert v.y == 12.
 
 def test_write_vec2d():
-    file_path = package_path/"garbage/vec2d.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/vec2d.cs2.parsed"
 
     v = Vec2d(5, 12.)
 
@@ -82,7 +83,7 @@ def test_read_vec3d(file_path = package_path/"files/unit_test_cs2_parsed/vec2d.c
         assert v.z == 17.
 
 def test_write_vec3d():
-    file_path = package_path/"garbage/vec2d.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/vec2d.cs2.parsed"
 
     v = Vec3d(5, 12., 17.)
 
@@ -104,7 +105,7 @@ def test_read_unicode_string(file_path = package_path/"files/unit_test_cs2_parse
         assert us.length == 11
 
 def test_write_unicode_string():
-    file_path = package_path/"garbage/unicode_string.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/unicode_string.cs2.parsed"
 
     us = UnicodeString(11, "hello world")
     with open(file_path, "wb") as f:
@@ -131,7 +132,7 @@ def test_read_nogo(file_path = package_path/"files/unit_test_cs2_parsed/no_go.cs
         assert us.numLinesConnected == list(range(5))
 
 def test_write_nogo():
-    file_path = package_path/"garbage/no_go.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/no_go.cs2.parsed"
 
     us = NogoZone(5, [Vec2d(0., 0.), Vec2d(1., 0.), Vec2d(2., 12.), Vec2d(5.2, 0.), Vec2d(6.3, 1.2)], list(range(5)))
 
@@ -154,7 +155,7 @@ def test_read_vfx_attachment(file_path = package_path/"files/unit_test_cs2_parse
         assert va.numIndices == 3
 
 def test_write_vfx_attachment():
-    file_path = package_path/"garbage/vfx_attachment.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/vfx_attachment.cs2.parsed"
 
     va = VFXAttachment(3, [0, 0, 5])
 
@@ -181,7 +182,7 @@ def test_read_file_ref(file_path = package_path/"files/unit_test_cs2_parsed/file
 
 
 def test_write_file_ref():
-    file_path = package_path/"garbage/file_ref.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/file_ref.cs2.parsed"
 
     fr = FileRef(UnicodeString(11, "hello world"), UnicodeString(12, "hello world2"), TransformMatrix(*list(range(16))), 1)
 
@@ -206,7 +207,7 @@ def test_read_transform_matrix(file_path = package_path/"files/unit_test_cs2_par
 
 
 def test_write_transform_matrix():
-    file_path = package_path/"garbage/transform_matrix.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/transform_matrix.cs2.parsed"
 
     tm = TransformMatrix(*list(range(16)))
 
@@ -235,7 +236,7 @@ def test_read_soft_collision(file_path = package_path/"files/unit_test_cs2_parse
 
 
 def test_write_soft_collision():
-    file_path = package_path/"garbage/soft_collision.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/soft_collision.cs2.parsed"
 
     sc = SoftCollision(UnicodeString(11, "hello world"), TransformMatrix(*list(range(16))), 1, 12., 42.)
 
@@ -268,7 +269,7 @@ def test_read_line_node(file_path = package_path/"files/unit_test_cs2_parsed/lin
 
 
 def test_write_line_node():
-    file_path = package_path/"garbage/line_node.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/line_node.cs2.parsed"
 
     ln = LineNode(UnicodeString(11, "hello world"), 12, [Vec3d(i, i+1, i+2) for i in range(12)], 13)
 
@@ -293,7 +294,7 @@ def test_read_tech_node(file_path = package_path/"files/unit_test_cs2_parsed/tec
 
 
 def test_write_tech_node():
-    file_path = package_path/"garbage/tech_node.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/tech_node.cs2.parsed"
 
     tn = TechNode(UnicodeString(11, "hello world"), TransformMatrix(*list(range(16))))
 
@@ -323,7 +324,7 @@ def test_read_bounding_box(file_path = package_path/"files/unit_test_cs2_parsed/
 
 
 def test_write_bounding_box():
-    file_path = package_path/"garbage/bounding_box.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/bounding_box.cs2.parsed"
 
     bb = BoundingBox(0., 1., 0., 20, 12, 43)
 
@@ -362,7 +363,7 @@ def test_read_ef_line(file_path = package_path/"files/unit_test_cs2_parsed/ef_li
 
 
 def test_write_ef_line():
-    file_path = package_path/"garbage/ef_line.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/ef_line.cs2.parsed"
 
     ef = EFLine(UnicodeString(11, "hello world"), 12, Vec3d(0., 1., 0.), Vec3d(5., 1., 3.), Vec3d(2., 2., 0.), 13)
 
@@ -397,7 +398,7 @@ def test_read_platform(file_path = package_path/"files/unit_test_cs2_parsed/plat
             assert p.isPlatformGround == True
 
 def test_write_platform():
-    file_path = package_path/"garbage/platform.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/platform.cs2.parsed"
 
     pl = Platform(2, [Polygon(Vec3d(1, 0, 2), 3, [Vec3d(1, 23, 12)]*3, True)]*2, 12)
 
@@ -432,7 +433,7 @@ def test_read_face_edge_data(file_path = package_path/"files/unit_test_cs2_parse
 
 
 def test_write_face_edge_data():
-    file_path = package_path/"garbage/face_edge_data.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/face_edge_data.cs2.parsed"
 
     fed = FaceEdgeData(*[FaceEdge(i, i+1, i+2, i+3, i+4) for i in range(3)])
 
@@ -463,7 +464,7 @@ def test_read_face_edge(file_path = package_path/"files/unit_test_cs2_parsed/fac
 
 
 def test_write_face_edge():
-    file_path = package_path/"garbage/face_edge.cs2.parsed"
+    file_path = package_path/"garbage/test_generated_files/face_edge.cs2.parsed"
 
     fe = FaceEdge(12, 13, 42, 46, 12)
 

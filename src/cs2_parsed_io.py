@@ -1230,8 +1230,24 @@ class DestructLevel():
             
         return True
         
-
-
+    def __repr__(self,):
+        return f"Destruct of name {self.destructName}, index {self.destructIndex}, with:\n"+\
+                f" - {self.numWindows} Windows;\n"+\
+                f" - {self.numDoors} Doors;\n"+\
+                f" - {self.numSpecial} Special;\n"+\
+                f" - {self.numLines} Lines;\n"+\
+                f" - {self.numNogo} Nogo;\n"+\
+                f" - {self.numPipes} Pipes;\n"+\
+                f" - {self.numCannons} Cannons;\n"+\
+                f" - {self.numArrowEmitters} ArrowEmitters;\n"+\
+                f" - {self.numDockingPoints} DockingPoints;\n"+\
+                f" - {self.numSoftCollisions} SoftCollisions;\n"+\
+                f" - {self.numFileRefs} FileRefs;\n"+\
+                f" - {self.numEFLines} EFLines;\n"+\
+                f" - {self.numActionVFX} ActionVFX;\n"+\
+                f" - {self.numActionVFX2} ActionVFX2;\n"+\
+                f" - {self.numAttActionVFX} AttActionVFX;\n"+\
+                f" - {self.numAttActionVFX2} AttActionVFX2;\n"
 
 class BuildingPiece():
     pieceName:UnicodeString
