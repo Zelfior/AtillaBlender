@@ -3,91 +3,10 @@ import struct
 from pathlib import Path
 from typing import IO, Any, List
 
-from src.io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short
+from src.io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short, UnicodeString, Vec2d, Vec3d, SomeBytes
 
 debug = False
 
-class SomeBytes():
-    length:int
-    value:Any
-    def __init__(self, length:int, value:Any):
-        self.length = length
-        self.value = value
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11):
-        self.value, self.length = io_bytes(io, self.value, self.length, operation)
-        if debug:
-            print(f"bytes of length {self.length} : {self.value} at {hex(io.tell()-1)}")
-    def __eq__(self, other:'SomeBytes'):
-        return self.length == other.length and self.value == other.value
-
-class UnicodeString():
-    length:int
-    value:str
-    def __init__(self, length:int, value:str):
-        self.length = length
-        self.value = value
-    def new_unicodestring():
-        return UnicodeString(0, None)
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11):
-        self.length = io_short(io, self.length, operation)
-
-        if operation == IOOperation.READ:
-            self.value = io_str(io, "o"*self.length, operation)
-        else:
-            self.value = io_str(io, self.value, operation)
-
-        if debug:
-            print(f"string of length {self.length} : {self.value}")
-    def __eq__(self, other:'UnicodeString'):
-        return self.length == other.length and self.value == other.value
-    def __repr__(self,):
-        return f"Unicode string of length {self.length} and value {self.value}"
-    
-class Vec2d():
-    x:float
-    y:float
-    def __init__(self, x:float, y:float):
-        self.x = x
-        self.y = y
-    def new_vec2d():
-        return Vec2d(None, None)
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11):
-        self.x = io_float(io, self.x, operation)
-        self.y = io_float(io, self.y, operation)
-
-        if debug:
-            print(f"vec2d ({self.x}, {self.y})")
-    def __eq__(self, other:'Vec2d'):
-        return self.x == other.x and self.y == other.y
-    
-class Vec3d():
-    x:float
-    y:float
-    z:float
-    def __init__(self, x:float, y:float, z:float):
-        self.x = x
-        self.y = y
-        self.z = z
-    def new_vec3d():
-        return Vec3d(None, None, None)
-    def from_to_file(self, io:IO, operation:IOOperation, version = 11, inverse = True):
-        self.x = io_float(io, self.x, operation)
-        inverse = False
-        if inverse:
-            self.z = io_float(io, self.z, operation)
-            self.y = io_float(io, self.y, operation)
-        else:
-            self.y = io_float(io, self.y, operation)
-            self.z = io_float(io, self.z, operation)
-
-        if debug:
-            print(f"vec3d ({self.x}, {self.y}, {self.z})")
-    def __eq__(self, other:'Vec3d'):
-        return self.x == other.x and self.y == other.y and self.z == other.z
-    
-    def __repr__(self,):
-        return f"Vec3d({self.x}, {self.y}, {self.z})"
-    
 class BoundingBox():
     minX:float
     minY:float
