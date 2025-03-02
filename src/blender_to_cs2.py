@@ -447,7 +447,8 @@ class BlenderToCs2:
         neighbour_face_20 = []
 
         for face_index in range(len(faces)):
-            faces[face_index] = Face(face_index, faces[face_index][0], faces[face_index][1], faces[face_index][2], None)
+            if not isinstance(faces[face_index], Face):
+                faces[face_index] = Face(face_index, faces[face_index][0], faces[face_index][1], faces[face_index][2], None)
  
         for face in range(len(faces)):
             defined = 0
