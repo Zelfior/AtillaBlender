@@ -23,41 +23,34 @@ class MeshEditor:
         else:
             self.cm = cm
         
-    def apply_transform_matrix(self, object_name:str, matrix:TransformMatrix):
-        obj:bpy.types.Object = bpy.data.objects[object_name]
-
-        mat = matrix.to_matrix(transpose=True)
-
-        col_save = mat[1]
-        mat[1] = mat[2]
-        mat[2] = col_save
+    def swap_y_z_matrix(self, mat:List[List[float]]):
+        
+        col_save = mat[1].copy()
+        mat[1] = mat[2].copy()
+        mat[2] = col_save.copy()
 
         for i in range(4):
-            e_save = mat[i][1]
-            mat[i][1] = mat[i][2]
+            e_save = float(mat[i][1])
+            mat[i][1] = float(mat[i][2])
             mat[i][2] = e_save
 
-        obj.matrix_world = mat
+        return mat
+
+    def apply_transform_matrix(self, object_name:str, matrix:TransformMatrix):
+        mat = matrix.to_matrix(transpose=False)
+        mat = self.swap_y_z_matrix(mat)
+
+        bpy.data.objects[object_name].matrix_world = mat
 
     def read_transform_matrix(self, object_name:str):
-        obj:bpy.types.Object = bpy.data.objects[object_name]
-
-        mat:mathutils.Matrix = obj.matrix_world
+        mat:mathutils.Matrix = bpy.data.objects[object_name].matrix_world.copy()
 
         mat.transpose()
-
-        col_save = mat[1]
-        mat[1] = mat[2]
-        mat[2] = col_save
-
-        for i in range(4):
-            e_save = mat[i][1]
-            mat[i][1] = mat[i][2]
-            mat[i][2] = e_save
-
+        mat = self.swap_y_z_matrix(mat)
         mat_as_mapping = [mat[i][j] for j in range(4) for i in range(4)]
 
         return TransformMatrix(*mat_as_mapping)
+    
     """
         Goes to edit mode, if an object is selected and not already in edit mode, its data are stored, and the bmesh is created.
     """
@@ -180,7 +173,7 @@ class MeshEditor:
 
         return empty
 
-    def make_cylinder(self, radius:float, height:float, name:str, collection_name:str, node_transorm:TransformMatrix):
+    def make_cylinder(self, radius:float, height:float, object_name:str, collection_name:str, node_transorm:TransformMatrix):
         bpy.ops.mesh.primitive_cylinder_add(radius=radius, 
                                                     depth=height, 
                                                     enter_editmode=False, 
@@ -190,7 +183,7 @@ class MeshEditor:
                                                     scale=(1., 1., 1.))
         
         cyl:bpy.types.Object = bpy.context.view_layer.objects.active
-        self.cm.rename_object(cyl, name)
+        self.cm.rename_object(cyl, object_name)
         self.apply_transform_matrix(cyl.name, node_transorm)
         
         bpy.data.objects[cyl.name].location.z += height/2

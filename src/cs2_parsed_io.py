@@ -191,7 +191,7 @@ class TechNode():
         
         for param in ["nodeName", "NodeTransform"]:
             if self.__getattribute__(param) != other.__getattribute__(param):
-                print(f"TechNode have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                print(f"TechNode have different {param}, found \n{self.__getattribute__(param)} and \n{other.__getattribute__(param)}")
                 return False
         return True
 

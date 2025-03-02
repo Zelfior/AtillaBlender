@@ -9,12 +9,9 @@ class CollectionManager:
     def get_selected_collection(self):
         return bpy.context.collection.name
 
-    def rename_object(self, o
-                                    # :Union[
-                                    # bpy.types.Object, 
-                                    # bpy.types.Collection
-                                    # ]
-                                    , name:str):
+    def rename_object(self, 
+                            o:Union[bpy.types.Object, bpy.types.Collection], 
+                            name:str):
         """
             Please do not ask why this heresy for it is the work of Melkor
         """
