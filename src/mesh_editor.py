@@ -37,7 +37,7 @@ class MeshEditor:
         return mat
 
     def apply_transform_matrix(self, object_name:str, matrix:TransformMatrix):
-        mat = matrix.to_matrix(transpose=False)
+        mat = matrix.to_matrix(transpose=True)
         mat = self.swap_y_z_matrix(mat)
 
         bpy.data.objects[object_name].matrix_world = mat
@@ -169,7 +169,7 @@ class MeshEditor:
         empty:bpy.types.Object = bpy.context.view_layer.objects.active #bpy.data.objects[-1]
         self.cm.rename_object(empty, empty_name)
 
-        self.apply_transform_matrix(empty_name, matrix)
+        self.apply_transform_matrix(empty.name, matrix)
 
         return empty
 

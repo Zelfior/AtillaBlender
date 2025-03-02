@@ -223,6 +223,8 @@ class Cs2ToBlender:
         empty = self.me.make_empty(name, t.NodeTransform)
 
         self.cm.move_object_to_collection(empty, collection_name)
+
+        print(f"Empty {empty.name} location: ", empty.location, "world matrix", empty.matrix_world, "\n", t.NodeTransform)
         
 
     def make_platform(self, collection_name:str, p:Platform, transform_matrixes:List[TransformMatrix]):
