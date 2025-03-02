@@ -29,13 +29,13 @@ class BlenderToCs2:
     def read_bounding_box(self, name:str):
         print(f"Reading bounding box {name}")
         vertices, _, _, _ = self.me.make_py_data(name)
-
-        min_x = min([v.x for v in vertices])
-        min_y = min([v.y for v in vertices])
-        min_z = min([v.z for v in vertices])
-        max_x = max([v.x for v in vertices])
-        max_y = max([v.y for v in vertices])
-        max_z = max([v.z for v in vertices])
+        
+        min_x = min([v.x if isinstance(v, Vec3d) else v[0] for v in vertices])
+        min_y = min([v.y if isinstance(v, Vec3d) else v[1] for v in vertices])
+        min_z = min([v.z if isinstance(v, Vec3d) else v[2] for v in vertices])
+        max_x = max([v.x if isinstance(v, Vec3d) else v[0] for v in vertices])
+        max_y = max([v.y if isinstance(v, Vec3d) else v[1] for v in vertices])
+        max_z = max([v.z if isinstance(v, Vec3d) else v[2] for v in vertices])
 
         return BoundingBox(min_x, min_y, min_z, max_x, max_y, max_z)
     
@@ -288,8 +288,9 @@ class BlenderToCs2:
                         numAttActionVFX2=num_att_actionVFX2,
                         attActionVFX2=att_actionVFX2_data)
     
-    def make_cs2(self, version = 11):
-        collection_name = self.cm.get_selected_collection()
+    def make_cs2(self, version = 11, collection_name:str = ""):
+        if collection_name == "":
+            collection_name = self.cm.get_selected_collection()
 
         print(f"Making cs2 from collection {collection_name}")
 
@@ -445,6 +446,9 @@ class BlenderToCs2:
         neighbour_face_12 = []
         neighbour_face_20 = []
 
+        for face_index in range(len(faces)):
+            faces[face_index] = Face(face_index, faces[face_index][0], faces[face_index][1], faces[face_index][2], None)
+ 
         for face in range(len(faces)):
             defined = 0
             index_0 = faces[face].vertIndex0
@@ -495,6 +499,7 @@ class BlenderToCs2:
     def read_line(self, name:str, line_type=0, swap_yz = True) -> LineNode:
         print(f"Reading line {name}")
         verts, edges, faces, _ = self.me.make_py_data(name, swap_yz=swap_yz)
+        verts = [v if isinstance(v, Vec3d) else Vec3d(*v) for v in verts]
         return LineNode(UnicodeString(len(name), name),
                             len(verts),
                             verts,

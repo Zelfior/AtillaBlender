@@ -38,9 +38,11 @@ def run_test(file_path, version = 11):
     c2b.make_cs2(cs2, "")
 
     b2c = BlenderToCs2(c2b.cm, c2b.me)
-    cs2_output = b2c.make_cs2(version=version)
+    cs2_output = b2c.make_cs2(version=version, collection_name="cs2_parsed__collection")
 
-    assert cs2 == cs2_output
+    assert cs2 == cs2_output, f"Test failed!, found \n\n{cs2}\n\n instead of \n\n{cs2_output}"
+
+    print(f"Test on {file_path} passed!")
 
 
 

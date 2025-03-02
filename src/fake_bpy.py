@@ -1,5 +1,5 @@
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 from src.cs2_parsed_io import Vec3d, Face, TransformMatrix
 
 debug = True
@@ -58,7 +58,7 @@ class FakeMeshEditor:
 
     def make_object_from_data(self, 
                               object_name:str, 
-                              vertex_list:List[Tuple[float, float, float] | Vec3d], 
+                              vertex_list:List[Union[Tuple[float, float, float], Vec3d]], 
                               edge_list:List[Tuple[int, int]], 
                               face_list:List[Face],
                               swap_yz = True,
@@ -239,6 +239,9 @@ class FakeCollectionManager:
     def clear_unused_materials(self):
         pass
             
+    def reset(self):
+        self.collection_master = CollectionElement("")
+
     def exist_collection(self, collection_name):
         return self.collection_master.get_collection_element_recursive(collection_name) is not None
             

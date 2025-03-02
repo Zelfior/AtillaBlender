@@ -1,3 +1,4 @@
+from typing import Union
 import bpy
 
 class CollectionManager:
@@ -8,7 +9,12 @@ class CollectionManager:
     def get_selected_collection(self):
         return bpy.context.collection.name
 
-    def rename_object(self, o:bpy.types.Object | bpy.types.Collection, name:str):
+    def rename_object(self, o
+                                    # :Union[
+                                    # bpy.types.Object, 
+                                    # bpy.types.Collection
+                                    # ]
+                                    , name:str):
         """
             Please do not ask why this heresy for it is the work of Melkor
         """
@@ -42,7 +48,12 @@ class CollectionManager:
         return [c.name for c in bpy.data.collections.get(collection_name).children]
         
     def get_collection_object_list(self, collection_name):
-        return [object.name for object in bpy.data.collections.get(collection_name)]
+        col:bpy.types.Collection = bpy.data.collections.get(collection_name)
+
+        if col is None:
+            return []
+        else:
+            return [obj.name for obj in bpy.data.collections.get(collection_name).objects]
 
     def get_collection_parent_path(self, collection_name, current_path):
         if self.get_collection_parent(collection_name) == None:
@@ -71,7 +82,7 @@ class CollectionManager:
         print("Deleting object", object_name)
         if object_name in bpy.data.objects:
             bpy.data.objects.remove(bpy.data.objects.get(object_name), do_unlink=True)
-            self.clear_unattached_objects
+            self.clear_unattached_objects()
 
     def clear_unattached_objects(self):
         for obj in bpy.data.objects:
@@ -99,6 +110,26 @@ class CollectionManager:
             if obj.users == 0:
                 print(obj.name,"removed")
                 bpy.data.materials.remove(obj)
+
+    def reset(self):
+        """
+            Clears the blender model
+        """
+        for object in bpy.data.objects:
+            bpy.data.objects.remove(object, do_unlink=True)
+
+        for obj in bpy.data.lights:
+            bpy.data.lights.remove(obj, do_unlink=True)
+            
+        for obj in bpy.data.cameras:
+            bpy.data.cameras.remove(obj, do_unlink=True)
+                
+        for obj in bpy.data.meshes:
+            bpy.data.meshes.remove(obj)
+
+        for collection in bpy.data.collections:
+            bpy.data.collections.remove(collection)
+        
             
     def exist_collection(self, collection_name):
         return not (bpy.data.collections.get(collection_name) == None)

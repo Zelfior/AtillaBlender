@@ -1,10 +1,10 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import bpy
 import bmesh
 import mathutils
 
 from src.collection_manager import CollectionManager
-from src.cs2_parsed_io import Vec3d, Face, TransformMatrix
+from src.cs2_parsed_io import Vec3d, Face, TransformMatrix, FaceEdge
 
 
 """
@@ -14,11 +14,14 @@ from src.cs2_parsed_io import Vec3d, Face, TransformMatrix
 """
 class MeshEditor:
     
-    def __init__(self):
+    def __init__(self, cm:CollectionManager = None):
         self.all_edit_object_data:bpy.types.Mesh = {}
         self.all_edit_object_bmesh:bmesh.types.BMesh = {}
 
-        self.cm = CollectionManager()
+        if cm is None:
+            self.cm = CollectionManager()
+        else:
+            self.cm = cm
         
     def apply_transform_matrix(self, object_name:str, matrix:TransformMatrix):
         obj:bpy.types.Object = bpy.data.objects[object_name]
@@ -52,7 +55,9 @@ class MeshEditor:
             mat[i][1] = mat[i][2]
             mat[i][2] = e_save
 
-        return TransformMatrix(**mat)
+        mat_as_mapping = [mat[i][j] for j in range(4) for i in range(4)]
+
+        return TransformMatrix(*mat_as_mapping)
     """
         Goes to edit mode, if an object is selected and not already in edit mode, its data are stored, and the bmesh is created.
     """
@@ -117,7 +122,7 @@ class MeshEditor:
             
         if swap_yz:
             for i in range(len(vertex_list)):
-                vertex_list[i] = [vertex_list[i][0], vertex_list[i][2], vertex_list[i][1]]
+                vertex_list[i] = Vec3d(vertex_list[i][0], vertex_list[i][2], vertex_list[i][1])
 
         edge_list = []
         for e in obj_data.edges:
@@ -125,7 +130,7 @@ class MeshEditor:
             
         face_list = []
         for p in obj_data.polygons:
-            face_list.append((v for v in p.vertices))
+            face_list.append(list([v for v in p.vertices]))
 
         normal_list = [p.normal for p in obj_data.polygons]
 
@@ -134,9 +139,9 @@ class MeshEditor:
 
     def make_object_from_data(self, 
                               object_name:str, 
-                              vertex_list:List[Tuple[float, float, float] | Vec3d], 
+                              vertex_list:List[Union[Tuple[float, float, float], Vec3d]], 
                               edge_list:List[Tuple[int, int]], 
-                              face_list:List[List[float] | Face],
+                              face_list:List[Union[List[float], Face]],
                               swap_yz = True,
                               normals = []):
         
