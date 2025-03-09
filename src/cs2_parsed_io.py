@@ -1,7 +1,10 @@
 
+import math
 import struct
 from pathlib import Path
 from typing import IO, Any, List
+
+import numpy as np
 
 from src.io_elementary import IOOperation, io_bytes, io_float, io_int, io_str, io_short, UnicodeString, Vec2d, Vec3d, SomeBytes
 
@@ -547,14 +550,33 @@ class Polygon():
         self.somebyte_2.from_to_file(io, operation)
 
     def __eq__(self, other:'Polygon'):
-        for param in ["normal", "numVerts", "isPlatformGround"]:
+        for param in ["numVerts", "isPlatformGround"]:
             if self.__getattribute__(param) != other.__getattribute__(param):
                 print(f"Polygons have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
                 return False
-        
-        for i in range(len(self.dataVerts)):
-            if self.dataVerts[i] != other.dataVerts[i]:
-                print(f"Polygons have different vertex {i}")
+            
+        if sum([self.normal.x * other.normal.x, self.normal.y * other.normal.y, self.normal.z * other.normal.z ]) < 0.95:
+                print(f"Polygons have different notmals, found {self.normal} and {other.normal}")
+                return False
+
+
+        self_np_polygon_list = [[vert.x, vert.y, vert.z] for vert in self.dataVerts]
+        other_np_polygon_list = [[vert.x, vert.y, vert.z] for vert in other.dataVerts]
+
+        unique_self_np_polygon_list = np.unique(self_np_polygon_list, axis=0)
+        unique_other_np_polygon_list = np.unique(other_np_polygon_list, axis=0)
+
+        for vert in unique_self_np_polygon_list:
+            valid = False
+            min_distance = 1
+            for vert2 in unique_other_np_polygon_list:
+                distance = math.sqrt(sum([math.pow(vert[0] - vert2[0], 2), math.pow(vert[1] - vert2[1], 2), math.pow(vert[2] - vert2[2], 2)]))
+                min_distance = min(min_distance, distance)
+                if distance < 1e-4:
+                    valid = True
+                    break
+            if not valid:
+                print(f"Polygons have different vertices, found {unique_self_np_polygon_list} and {unique_other_np_polygon_list}, minimum distance =", min_distance)
                 return False
             
         return True
@@ -598,11 +620,31 @@ class Platform():
             if self.__getattribute__(param) != other.__getattribute__(param):
                 print(f"Platform have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
                 return False
-        
-        for i in range(len(self.dataPolygons)):
-            if self.dataPolygons[i] != other.dataPolygons[i]:
-                print(f"Platform have different polygon {i}")
+        polygon_index = 0
+        for polygon in self.dataPolygons:
+            valid = False
+            for polygon2 in other.dataPolygons:
+                if polygon == polygon2:
+                    valid = True
+                    break
+            if not valid:
+                print(f"Polygon {polygon} not found in other platform.")
                 return False
+
+            polygon_index += 1
+        # if not set(self.dataPolygons) == set(other.dataPolygons):
+        #     HASH
+        #     print(f"Platform have different polygons, found {self.dataPolygons} and {other.dataPolygons}")
+            # return False
+        # for i in range(len(self.dataPolygons)):
+
+        #     for polygon in self.dataPolygons:
+        #         if not polygon in other.dataPolygons:
+        #             print(f"Polygon {i} not found in other platform.")
+        #             return False
+            # if self.dataPolygons[i] != other.dataPolygons[i]:
+            #     print(f"Platform have different polygon {i}")
+            #     return False
             
         return True
     

@@ -108,8 +108,7 @@ class Cs2ToBlender:
 
         if destruct.numSoftCollisions > 0:
             soft_collisions_collection = destruct.destructName.value +collection_soft_collisions_suffix
-            print(f"CREATING COLLECTION {soft_collisions_collection}")
-            "piece01_destruct01_soft_collisions"
+            
             self.cm.new_collection(soft_collisions_collection, destruct.destructName.value)
             # exit()
 
@@ -224,8 +223,6 @@ class Cs2ToBlender:
 
         self.cm.move_object_to_collection(empty, collection_name)
 
-        print(f"Empty {empty.name} location: ", empty.location, "world matrix", empty.matrix_world, "\n", t.NodeTransform)
-        
 
     def make_platform(self, collection_name:str, p:Platform, transform_matrixes:List[TransformMatrix]):
         print(f"Making platform for {collection_name}")
@@ -269,8 +266,6 @@ class Cs2ToBlender:
             self.cm.move_object_to_collection(ob, collection_name)
 
             # self.apply_transform_matrixes(collection_name+"_ground", transform_matrixes)
-            
-        # TODO: "revert normals?"
 
     def make_file_ref(self, collection_name:str, fr:FileRef, transform_matrixes:List[TransformMatrix]):  
         print(f"Making file reference {fr.fileKey.value}")
@@ -281,9 +276,6 @@ class Cs2ToBlender:
     def make_soft_collision(self, collection_name:str, sc:SoftCollision, transform_matrixes:List[TransformMatrix]):
         print(f"Making soft collision {sc.nodeName.value}")
 
-        print(self.cm.get_collection_children("piece01_destruct01"), collection_name)
-        print(collection_name in self.cm.get_collection_children("piece01_destruct01"))
-        
         self.me.make_cylinder(sc.cylinderRadius, sc.cylinderHeight, sc.nodeName.value, collection_name, sc.nodeTransform)
         # self.me.apply_transform_matrixes(collection_name, transform_matrixes)
 
@@ -308,7 +300,7 @@ class Cs2ToBlender:
     def make_line(self, collection_name:str, ln:LineNode, transform_matrixes:List[TransformMatrix], closed = False, swap_yz = True):
         print(f"Making line {ln.lineName.value}")
         
-        print("LINE_TYPE", ln.lineType)
+        # print("LINE_TYPE", ln.lineType)
 
         edges = [(i, i+1) for i in range(len(ln.dataVerts) - 1)]
         if closed:

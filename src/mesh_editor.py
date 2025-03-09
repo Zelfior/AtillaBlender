@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 import bpy
 import bmesh
 import mathutils
@@ -15,8 +15,8 @@ from src.cs2_parsed_io import Vec3d, Face, TransformMatrix, FaceEdge
 class MeshEditor:
     
     def __init__(self, cm:CollectionManager = None):
-        self.all_edit_object_data:bpy.types.Mesh = {}
-        self.all_edit_object_bmesh:bmesh.types.BMesh = {}
+        self.all_edit_object_data:Dict[str, bpy.types.Mesh] = {}
+        self.all_edit_object_bmesh:Dict[str, bmesh.types.BMesh] = {}
 
         if cm is None:
             self.cm = CollectionManager()
@@ -47,7 +47,7 @@ class MeshEditor:
 
         mat.transpose()
         mat = self.swap_y_z_matrix(mat)
-        mat_as_mapping = [mat[i][j] for j in range(4) for i in range(4)]
+        mat_as_mapping = [mat[j][i] for j in range(4) for i in range(4)]
 
         return TransformMatrix(*mat_as_mapping)
     
@@ -69,12 +69,13 @@ class MeshEditor:
 
                 bpy.ops.object.mode_set(mode='EDIT', toggle=False)
 
-                self.all_edit_object_data:bpy.types.Mesh = {}
-                self.all_edit_object_bmesh:bmesh.types.BMesh = {}
+                self.all_edit_object_data:Dict[str, bpy.types.Mesh] = {}
+                self.all_edit_object_bmesh:Dict[str, bmesh.types.BMesh] = {}
 
                 for object in bpy.context.selected_objects:
-                    self.all_edit_object_data[object.name] = object.data
-                    self.all_edit_object_bmesh[object.name] = bmesh.from_edit_mesh(self.all_edit_object_data[object.name])
+                    if object.data is not None:
+                        self.all_edit_object_data[object.name] = object.data
+                        self.all_edit_object_bmesh[object.name] = bmesh.from_edit_mesh(self.all_edit_object_data[object.name])
 
     def go_to_object_mode(self, update_mesh:bool = True):
         if bpy.context.active_object is None:
@@ -126,6 +127,7 @@ class MeshEditor:
             face_list.append(list([v for v in p.vertices]))
 
         normal_list = [p.normal for p in obj_data.polygons]
+        normal_list = [Vec3d(n.x, n.z, n.y) for n in normal_list]
 
         return vertex_list, edge_list, face_list, normal_list
 
@@ -155,6 +157,22 @@ class MeshEditor:
 
         # Update the mesh
         me.update()
+
+        if normals != [] and len(normals) == len(ob.data.polygons):
+            bpy.ops.object.select_all(action='DESELECT')
+
+            self.cm.move_object_to_collection(ob, "Scene Collection")
+            ob.select_set(True)
+            bpy.context.view_layer.objects.active = ob
+            self.go_to_edit_mode()
+
+            self.all_edit_object_bmesh[object_name].faces.ensure_lookup_table()
+            for p in range(len(ob.data.polygons)):
+                if sum([ob.data.polygons[p].normal[0] * normals[p].x + \
+                            ob.data.polygons[p].normal[2] * normals[p].y +\
+                                ob.data.polygons[p].normal[1] * normals[p].z]) < 0:
+                    self.all_edit_object_bmesh[object_name].faces[p].normal_flip()
+            self.go_to_object_mode()
 
         return ob
 
