@@ -24,7 +24,6 @@ class MeshEditor:
             self.cm = cm
         
     def swap_y_z_matrix(self, mat:List[List[float]]):
-        
         col_save = mat[1].copy()
         mat[1] = mat[2].copy()
         mat[2] = col_save.copy()
@@ -207,3 +206,23 @@ class MeshEditor:
         bpy.data.objects[cyl.name].location.z += height/2
 
         self.cm.move_object_to_collection(cyl.name, collection_name)
+
+    def get_object_matrix_transform(self, object_name:str, swap_yz:bool = True) -> TransformMatrix:
+        if not object_name in bpy.data.objects:
+            raise ValueError(f"Object {object_name} unknown.")
+
+        mat = bpy.data.objects[object_name].matrix_world.copy()
+        mat.transpose()
+
+        matrix = [list(row) for row in mat]
+        if swap_yz:
+            matrix = self.swap_y_z_matrix(matrix)
+
+        list_matrix = []
+        for row in matrix:
+            list_matrix += row
+            
+        return TransformMatrix(*list_matrix)
+    
+    def update(self,):
+        bpy.context.view_layer.update()

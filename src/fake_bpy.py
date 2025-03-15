@@ -123,6 +123,9 @@ class FakeMeshEditor:
 
         self.cm.move_object_to_collection(new_name, collection_name)
 
+    def update(self,):
+        pass
+
 class CollectionElement:
     def __init__(self, name):
         self.name = name

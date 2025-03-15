@@ -103,7 +103,7 @@ class TransformMatrix():
         self.row1_col3 = row1_col3
         self.row2_col3 = row2_col3
         self.row3_col3 = row3_col3
-    def new_transform_matrix():
+    def new_transform_matrix() -> "TransformMatrix":
         return TransformMatrix(1, 0, 0, 0, 
                                0, 1, 0, 0, 
                                0, 0, 1, 0, 
@@ -667,8 +667,10 @@ class SoftCollision():
         self.some_short = some_short
         self.cylinderRadius = cylinderRadius
         self.cylinderHeight = cylinderHeight
+
     def new_soft_collision():
         return SoftCollision(None, None, None, None, None)
+    
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         if debug:
             print(f"Read soft collision at {hex(io.tell())}")
@@ -691,10 +693,14 @@ class SoftCollision():
 
     
     def __eq__(self, other:'SoftCollision'):
-        # not testing someshort
-        for param in ["nodeName", "nodeTransform", "cylinderRadius", "cylinderHeight", ]: #, "some_short"
+        #   not testing someshort
+        #   Not testing nodeName
+        for param in ["nodeTransform", "cylinderRadius", "cylinderHeight", ]: #, "some_short", "nodeName"
             if self.__getattribute__(param) != other.__getattribute__(param):
-                print(f"SoftCollision have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
+                if param == "nodeTransform":
+                    print(f"SoftCollision have different {param}, found \n{self.__getattribute__(param)}\nand \n{other.__getattribute__(param)}")
+                else:
+                    print(f"SoftCollision have different {param}, found {self.__getattribute__(param)} and {other.__getattribute__(param)}")
                 return False
             
         return True
@@ -1180,7 +1186,7 @@ class DestructLevel():
                 return False
         
         #   Not comparing the vfx attachments
-        for param in ["collision3dWindows", "collision3dDoors", "collision3dSpecial", "dataLines", "dataNogo", "dataPipes", "dataCannons", "dataArrowEmitters", "dataDockingPoints", "dataSoftCollisions", "dataFileRefs", "dataEFLines", "ActionVFX", "ActionVFX2"]:    
+        for param in ["collision3dWindows", "collision3dDoors", "collision3dSpecial", "dataLines", "dataNogo", "dataPipes", "dataCannons", "dataArrowEmitters", "dataDockingPoints", "dataFileRefs", "dataEFLines", "ActionVFX", "ActionVFX2"]:    
             if len(self.__getattribute__(param)) != len(other.__getattribute__(param)):
                 print(f"Params {param} have different length, found {len(self.__getattribute__(param))} and {len(other.__getattribute__(param))}")
             for i in range(len(self.__getattribute__(param))):
@@ -1189,6 +1195,21 @@ class DestructLevel():
                     print(f"DestructLevel have different {param}, found {self.__getattribute__(param)[i]} and {other.__getattribute__(param)[i]}")
                     return False
             
+        self_data_solf_collisions = self.dataSoftCollisions
+        other_data_solf_collisions = other.dataSoftCollisions
+
+        for col in self_data_solf_collisions:
+            soft_col_ok = False
+            for col2 in other_data_solf_collisions:
+                if col == col2:
+                    soft_col_ok = True
+                    break
+            
+            if not soft_col_ok:
+                print(f"Soft collision {col} not found in other.")
+                return False
+
+        
         return True
         
     def __repr__(self,):

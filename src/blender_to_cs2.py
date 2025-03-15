@@ -26,9 +26,9 @@ class BlenderToCs2:
     def make_transform_from_matrix_world(self, name:str) -> TransformMatrix:
         return self.me.read_transform_matrix(name)
         
-    def read_bounding_box(self, name:str):
+    def read_bounding_box(self, name:str, swap_yz:bool = True):
         print(f"Reading bounding box {name}")
-        vertices, _, _, _ = self.me.make_py_data(name)
+        vertices, _, _, _ = self.me.make_py_data(name, swap_yz=swap_yz)
         
         min_x = min([v.x if isinstance(v, Vec3d) else v[0] for v in vertices])
         min_y = min([v.y if isinstance(v, Vec3d) else v[1] for v in vertices])
@@ -289,6 +289,8 @@ class BlenderToCs2:
                         attActionVFX2=att_actionVFX2_data)
     
     def make_cs2(self, version = 11, collection_name:str = ""):
+        self.me.update()
+
         if collection_name == "":
             collection_name = self.cm.get_selected_collection()
 
@@ -389,34 +391,26 @@ class BlenderToCs2:
     def read_soft_collision(self, name:str):
         print(f"Reading soft collision {name}")
         
-        bb = self.read_bounding_box(name)
-
+        bb = self.read_bounding_box(name, swap_yz=False)
         radius = 0.5*(bb.maxX - bb.minX)
-        height = 0.5*(bb.maxZ - bb.minZ)
+        height = (bb.maxZ - bb.minZ)
 
-        center_x = 0.5*(bb.maxX + bb.minX)
-        center_y = 0.5*(bb.maxY + bb.minY)
-        center_z = 0.5*(bb.maxZ + bb.minZ)
+        matrix:TransformMatrix = self.me.get_object_matrix_transform(name)
+        matrix.row1_col3 -= height/2
 
-        print(bb)
-
-        matrix = TransformMatrix.new_transform_matrix()
-
-        matrix.row0_col3 = center_x
-        matrix.row1_col3 = center_y
-        matrix.row2_col3 = center_z# - height
-        
         new_name = name
         if "." in name and name.split(".")[-1].isdigit():
             new_name = ".".join(name.split(".")[:-1])
 
-        return SoftCollision(
+        soft_col = SoftCollision(
                                 UnicodeString(len(new_name), new_name),
                                 matrix,
                                 0,
                                 radius,
                                 height
                             )
+        
+        return soft_col
     
     def read_efline(self, name:str) -> EFLine:
         verts, edges, faces, _ = self.me.make_py_data(name)
