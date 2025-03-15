@@ -123,6 +123,32 @@ class FakeMeshEditor:
 
         self.cm.move_object_to_collection(new_name, collection_name)
 
+
+    def swap_y_z_matrix(self, mat:List[List[float]]):
+        col_save = mat[1].copy()
+        mat[1] = mat[2].copy()
+        mat[2] = col_save.copy()
+
+        for i in range(4):
+            e_save = float(mat[i][1])
+            mat[i][1] = float(mat[i][2])
+            mat[i][2] = e_save
+
+        return mat
+
+    def get_object_matrix_transform(self, object_name:str, swap_yz:bool = True) -> TransformMatrix:
+        matrix = [list(row) for row in self.read_transform_matrix(object_name).to_matrix()]
+
+        if swap_yz:
+            matrix = self.swap_y_z_matrix(matrix)
+
+        list_matrix = []
+        for row in matrix:
+            list_matrix += row
+            
+        return TransformMatrix(*list_matrix)
+    
+    
     def update(self,):
         pass
 
