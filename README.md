@@ -1,10 +1,11 @@
 This is the draft of a blender plug-in to import and export TotalWar Attila .cs2.parsed file.
 
-It is tested on the 4.2 version of blender, but should work beyont 3.0 (maybe 2.8).
+It is tested on the 4.2 version of blender, but should work beyond 3.0 (maybe 2.8).
 
 To generate the extension zip, from windows run make_zip.ps1. On other OS, zip the blender_module.py file along with the src folder.
 
 
+## How to use?
 
 The export will require to have a collection selected that contains the following (here it would be cs2_parsed_cs2_parsed_collection). A cs2 file consists of:
 
@@ -25,3 +26,16 @@ The export will require to have a collection selected that contains the followin
     - a mesh representing the platforms, name should end with platform
 
     - for each of the [doors, windows, lines, nogos, ...], a collection containing a serie of object of the same type, whose name ends with the object type (ex. doors)
+
+
+## Known Issues
+
+**.cs2.parsed** file parsing/writing known issues:
+
+- Collision3D has a parent index that was not retro-engineered, can lead to improper behavior.
+- SoftCollision also has an undefined number
+- FileRef also has an undefined number
+- EFLine has an parent index that was not retro-engineered, can lead to improper behavior.
+- Both CS2 file and Destruct level can host data that were not retro-engineered.
+
+
