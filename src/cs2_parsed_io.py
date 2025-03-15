@@ -108,6 +108,24 @@ class TransformMatrix():
                                0, 1, 0, 0, 
                                0, 0, 1, 0, 
                                0, 0, 0, 1)
+    def copy(self,):
+        return TransformMatrix(
+                                row0_col0 = self.row0_col0,
+                                row1_col0 = self.row1_col0,
+                                row2_col0 = self.row2_col0,
+                                row3_col0 = self.row3_col0,
+                                row0_col1 = self.row0_col1,
+                                row1_col1 = self.row1_col1,
+                                row2_col1 = self.row2_col1,
+                                row3_col1 = self.row3_col1,
+                                row0_col2 = self.row0_col2,
+                                row1_col2 = self.row1_col2,
+                                row2_col2 = self.row2_col2,
+                                row3_col2 = self.row3_col2,
+                                row0_col3 = self.row0_col3,
+                                row1_col3 = self.row1_col3,
+                                row2_col3 = self.row2_col3,
+                                row3_col3 = self.row3_col3)
     def from_to_file(self, io:IO, operation:IOOperation, version = 11):
         self.row0_col0 = io_float(io, self.row0_col0, operation)
         self.row1_col0 = io_float(io, self.row1_col0, operation)

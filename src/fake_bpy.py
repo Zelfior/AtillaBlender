@@ -29,7 +29,7 @@ class FakeMeshEditor:
         elif object_name in self.empty:
             return self.empty[object_name]
         else:
-            raise KeyError
+            raise KeyError(f"Requested {object_name}, found {list(self.objects_transform.keys())} and {list(self.empty.keys())}")
     
     def make_py_data(self, 
                         object_name:str,
@@ -103,7 +103,7 @@ class FakeMeshEditor:
 
         return name
 
-    def make_cylinder(self, radius:float, height:float, name:str, collection_name:str, node_transorm:TransformMatrix):
+    def make_cylinder(self, radius:float, height:float, name:str, collection_name:str, node_transform:TransformMatrix):
         new_name = name
         if new_name in self.objects_data:
             i = 1
@@ -113,16 +113,19 @@ class FakeMeshEditor:
                 new_name = f"{name}.{i:03}"
             print(f"Renaming {name} to {new_name}")
 
-        matrix = node_transorm.to_matrix()
+        matrix = node_transform.to_matrix()
         center_coordinates = (matrix[0][3], matrix[1][3], matrix[2][3])
 
         self.make_object_from_data(new_name, [
-            [center_coordinates[0]-radius, center_coordinates[1]-radius, center_coordinates[2]-height],
-            [center_coordinates[0]+radius, center_coordinates[1]+radius, center_coordinates[2]+height]
-        ], [], [])
+            [center_coordinates[0]-radius, center_coordinates[1]-radius, center_coordinates[2]-height/2],
+            [center_coordinates[0]+radius, center_coordinates[1]+radius, center_coordinates[2]+height/2]
+        ], [], [], swap_yz=False)
+
+        nt = node_transform.copy()
+        nt.row1_col3 += height/2
 
         self.cm.move_object_to_collection(new_name, collection_name)
-
+        self.objects_transform[new_name] = nt
 
     def swap_y_z_matrix(self, mat:List[List[float]]):
         col_save = mat[1].copy()
@@ -137,10 +140,10 @@ class FakeMeshEditor:
         return mat
 
     def get_object_matrix_transform(self, object_name:str, swap_yz:bool = True) -> TransformMatrix:
-        matrix = [list(row) for row in self.read_transform_matrix(object_name).to_matrix()]
+        matrix = [list(row) for row in self.read_transform_matrix(object_name).to_matrix(transpose=True)]
 
-        if swap_yz:
-            matrix = self.swap_y_z_matrix(matrix)
+        # if not swap_yz:
+        #     matrix = self.swap_y_z_matrix(matrix)
 
         list_matrix = []
         for row in matrix:

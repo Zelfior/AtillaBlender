@@ -16,6 +16,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty
 
+from src.blender_to_cs2 import BlenderToCs2
 from src.cs2_parsed_io import Cs2File
 from src.cs2_to_blender import Cs2ToBlender
 from src.io_elementary import IOOperation, UnknownData
@@ -162,6 +163,7 @@ class file_loader_OT_input(bpy.types.Operator):
 
             c2b = Cs2ToBlender()
             c2b.make_cs2(context.scene.cs2_object, "cs2_parsed")
+            
 
 
         return {'FINISHED'}
@@ -174,31 +176,13 @@ class file_loader_OT_exput(bpy.types.Operator):
  
     def execute(self, context:bpy.types.Context):
         print('Exported to path: ', context.scene.output_file)
+        
 
-        # print('imported file: ', context.scene.input_file)
+        b2c = BlenderToCs2()
+        cs2_output = b2c.make_cs2()
 
-        # cs2_object = Cs2File.new_cs2file()
-        # try:
-        #     cs2_object.read_write_file(context.scene.input_file, IOOperation.READ, has_vfx=True)
-        #     context.scene.input_message = "Loaded file with VFX objects."
-        #     context.scene.input_error = False
-        # except (UnknownData, struct.error):
-        #     try:
-        #         cs2_object.read_write_file(context.scene.input_file, IOOperation.READ, has_vfx=False)
-        #         context.scene.input_message = "Loaded file without VFX objects."
-        #         context.scene.input_error = False
-        #     except (UnknownData, struct.error):
-        #         context.scene.input_message = "File can't be read, please contact the extension author."
-        #         context.scene.input_error = True
-        #         return {'FINISHED'}
-
-        # if not context.scene.input_error:
-        #     setattr(bpy.types.Scene, 'cs2_object', cs2_object)
-
-        #     c2b = Cs2ToBlender()
-        #     c2b.make_cs2(context.scene.cs2_object, "cs2_parsed")
-
-
+        cs2_output.read_write_file(context.scene.output_file, IOOperation.WRITE)
+        
         return {'FINISHED'}
 
 

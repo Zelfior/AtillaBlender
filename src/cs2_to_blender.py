@@ -212,6 +212,8 @@ class Cs2ToBlender:
         for p in range(cs2.piece_count):
             self.make_building_piece(name, collection_name, cs2.building_pieces[p], [transform_matrix])
 
+        
+
     def make_tech_node(self, collection_name:str, t:TechNode, transform_matrixes:List[TransformMatrix]):
         
         name = t.nodeName.value
